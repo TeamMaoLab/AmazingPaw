@@ -7,11 +7,11 @@ import { OrbitControls } from '/static/lib/OrbitControls.js';
 
 const SPHERE_SEG = 16;
 const AXIS_LENGTH = 8;
-const DEFAULT_CAM_POS = [50, 60, 60];
-const DEFAULT_CAM_TARGET = [10, 0, 20];
-const ORTHO_SIZE = 80;
-const VIEW_DIST = 80;
-const VIEW_TARGET = new THREE.Vector3(10, 0, 20);
+const DEFAULT_CAM_POS = [100, 110, 120];
+const DEFAULT_CAM_TARGET = [10, 0, 66];
+const ORTHO_SIZE = 160;
+const VIEW_DIST = 160;
+const VIEW_TARGET = new THREE.Vector3(10, 0, 66);
 
 let scene, renderer, controls, raycaster, mouse;
 let perspCam, orthoCam, activeCam;
