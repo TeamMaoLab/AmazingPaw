@@ -113,18 +113,9 @@ body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: #
 
 <div class="footer" id="footer">Initializing...</div>
 
-<script type="importmap">
-{
-    "imports": {
-        "three": "/static/lib/three.module.js",
-        "three/addons/": "/static/lib/"
-    }
-}
-</script>
-
 <script type="module">
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import * as THREE from '/static/lib/three.module.js';
+import { OrbitControls } from '/static/lib/OrbitControls.js';
 
 // ============================================================
 // 全局状态
@@ -145,7 +136,7 @@ const nodeSpans = {};      // treeNodeName -> <span> element
 
 // 高亮状态
 let selectedName = null;
-const FADED_OPACITY = 0.15;
+const FADED_OPACITY = 0.08;
 
 const SPHERE_SEG = 16;
 const AXIS_LENGTH = 8;
@@ -457,7 +448,10 @@ function createFrameAxes(name) {
     ];
     const arrows = dirs.map((dir, i) => {
         const arrow = new THREE.ArrowHelper(dir, new THREE.Vector3(0,0,0), arrowLen, colors[i], 2, 1.2);
-        arrow.line.material.linewidth = 2;
+        arrow.line.material.transparent = true;
+        arrow.line.material.opacity = 1.0;
+        arrow.cone.material.transparent = true;
+        arrow.cone.material.opacity = 1.0;
         group.add(arrow);
         return arrow;
     });
@@ -476,7 +470,7 @@ function createFrameAxes(name) {
 function createEl(el) {
     if (el.type === 'sphere') {
         const geom = new THREE.SphereGeometry(el.radius, SPHERE_SEG, SPHERE_SEG);
-        const mat = new THREE.MeshBasicMaterial({ color: el.color });
+        const mat = new THREE.MeshBasicMaterial({ color: el.color, transparent: true, opacity: 1.0, depthWrite: true });
         const mesh = new THREE.Mesh(geom, mat);
         scene.add(mesh);
         pointMeshes[el.point] = mesh;
@@ -494,9 +488,9 @@ function createEl(el) {
         geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         let mat;
         if (el.dash) {
-            mat = new THREE.LineDashedMaterial({ color: el.color, dashSize: 2, gapSize: 1.5 });
+            mat = new THREE.LineDashedMaterial({ color: el.color, dashSize: 2, gapSize: 1.5, transparent: true, opacity: 1.0 });
         } else {
-            mat = new THREE.LineBasicMaterial({ color: el.color, linewidth: el.width || 2 });
+            mat = new THREE.LineBasicMaterial({ color: el.color, linewidth: el.width || 2, transparent: true, opacity: 1.0 });
         }
         const line = new THREE.Line(geom, mat);
         if (el.dash) line.computeLineDistances();
@@ -508,7 +502,7 @@ function createEl(el) {
         const positions = new Float32Array((seg + 1) * 3);
         const geom = new THREE.BufferGeometry();
         geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        const mat = new THREE.LineBasicMaterial({ color: el.color });
+        const mat = new THREE.LineBasicMaterial({ color: el.color, transparent: true, opacity: 1.0 });
         const line = new THREE.Line(geom, mat);
         scene.add(line);
         circleObjects[el.id] = line;
