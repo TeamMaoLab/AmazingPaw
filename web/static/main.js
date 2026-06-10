@@ -9,6 +9,7 @@ import * as UI from '/static/ui.js';
 let mechDef = null;
 let currentParams = {};
 let selectedName = null;
+let previewActive = false;
 
 // ── highlight mapping ──
 const frameChildPoints = {
@@ -76,8 +77,10 @@ function selectNode(name) {
 function onParamChange(pname, value) {
     currentParams[pname] = value;
     mechDef._paramValues = currentParams;
-    Scene.updateScene(localCompute(currentParams));
+    const data = localCompute(currentParams);
+    Scene.updateScene(data);
     refreshLinkLengths();
+    if (previewActive) Scene.updatePreviewGeometry(data.points);
 }
 
 function onParamCommit() {
@@ -138,9 +141,24 @@ async function init() {
     document.getElementById('status').textContent = 'Ready';
     document.getElementById('footer').textContent = 'Ready';
 
+    document.getElementById('btn-preview')?.addEventListener('click', togglePreview);
+
     mechDef._paramValues = currentParams;
     Scene.updateScene(localCompute(currentParams));
     await doServerCompute();
+}
+
+function togglePreview() {
+    previewActive = !previewActive;
+    const btn = document.getElementById('btn-preview');
+    if (previewActive) {
+        btn.classList.add('active');
+        Scene.setPreviewMode(true);
+        Scene.updatePreviewGeometry(localCompute(currentParams).points);
+    } else {
+        btn.classList.remove('active');
+        Scene.setPreviewMode(false);
+    }
 }
 
 init();

@@ -138,6 +138,38 @@ VIS_ELEMENTS = [
 
 FRAME_NAMES = ["B", "P", "Rk", "C", "E"]
 
+RIGID_BODIES = [
+    {"name": "arm", "label": "drive arm", "points": ["P", "A", "Q", "R", "L"],
+     "faces": [["P", "A", "Q"]], "edges": [["R", "L"]],
+     "color": "#4488cc"},
+    {"name": "link", "label": "upright link", "points": ["P", "U"], "color": "#44aa66"},
+    {"name": "plate", "label": "finger plate", "points": ["T", "U", "Q"], "color": "#cc6644"},
+    {"name": "rod_r", "label": "right rod", "points": ["R", "D"], "color": "#888888"},
+    {"name": "rod_l", "label": "left rod", "points": ["L", "F"], "color": "#888888"},
+    {"name": "base", "label": "base", "points": ["B", "P"], "color": "#888888"},
+    {"name": "servo_r", "label": "right servo horn", "points": ["C", "D"], "color": "#aa44aa"},
+    {"name": "servo_l", "label": "left servo horn", "points": ["E", "F"], "color": "#aa44aa"},
+]
+
+JOINTS = [
+    # ── revolute (rocker closed chain) ──
+    {"name": "j_p", "type": "revolute", "bodies": ["arm", "link"], "point": "P", "axis": "Y", "desc": "arm-link at P"},
+    {"name": "j_u", "type": "revolute", "bodies": ["link", "plate"], "point": "U", "axis": "Y", "desc": "link-plate at U"},
+    {"name": "j_q", "type": "revolute", "bodies": ["plate", "arm"], "point": "Q", "axis": "Y", "desc": "plate-arm at Q"},
+    # ── revolute (base ↔ rocker at P) ──
+    {"name": "j_bp", "type": "revolute", "bodies": ["base", "arm"], "point": "P", "axis": "X", "desc": "base-arm at P (rocker)"},
+    {"name": "j_bu", "type": "revolute", "bodies": ["base", "link"], "point": "P", "axis": "X", "desc": "base-link at P (rocker)"},
+    # ── revolute (servo rotation at C/E) ──
+    {"name": "j_cr", "type": "revolute", "bodies": ["servo_r"], "point": "C", "axis": "Y", "desc": "servo_r rotates at C"},
+    {"name": "j_el", "type": "revolute", "bodies": ["servo_l"], "point": "E", "axis": "Y", "desc": "servo_l rotates at E"},
+    # ── ball joint (servo ↔ rod) ──
+    {"name": "j_dr", "type": "ball", "bodies": ["servo_r", "rod_r"], "point": "D", "desc": "servo_r-rod_r at D"},
+    {"name": "j_fl", "type": "ball", "bodies": ["servo_l", "rod_l"], "point": "F", "desc": "servo_l-rod_l at F"},
+    # ── ball joint (rod ↔ arm) ──
+    {"name": "j_rr", "type": "ball", "bodies": ["rod_r", "arm"], "point": "R", "desc": "rod_r-arm at R"},
+    {"name": "j_rl", "type": "ball", "bodies": ["rod_l", "arm"], "point": "L", "desc": "rod_l-arm at L"},
+]
+
 
 # ============================================================
 # 坐标计算
@@ -254,6 +286,8 @@ def get_mechanism_definition() -> dict:
         "growth_tree": GROWTH_TREE,
         "visualization": VIS_ELEMENTS,
         "frame_names": FRAME_NAMES,
+        "rigid_bodies": RIGID_BODIES,
+        "joints": JOINTS,
     }
 
 

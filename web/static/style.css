@@ -70,3 +70,10 @@ body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: #
 
 .loading-overlay { position: fixed; inset: 0; background: #f5f5f5; display: flex; align-items: center; justify-content: center; z-index: 999; }
 .loading-overlay.hidden { display: none; }
+
+/* rigid body & joint labels */
+.viewport .body-label { position: absolute; font-size: 13px; font-weight: 700; pointer-events: none; white-space: nowrap; padding: 2px 8px; border-radius: 3px; background: rgba(255,255,255,0.85); border: 1.5px solid; }
+.viewport .joint-label { position: absolute; font-size: 10px; color: #cc2222; pointer-events: none; white-space: nowrap; padding: 1px 4px; border-radius: 2px; background: rgba(255,240,240,0.85); border: 1px solid #fcc; }
+
+/* preview toggle */
+.view-btns button.active { background: #4488ff; color: #fff; border-color: #4488ff; }
