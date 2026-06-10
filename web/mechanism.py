@@ -99,41 +99,41 @@ GROWTH_TREE = {
 }
 
 VIS_ELEMENTS = [
-    # ── reference (dot line, muted) ──
-    {"id": "base_pivot_line",   "type": "line",   "color": "#bbbbbb", "style": "ref",
+    # ── reference (dot line, light grey) ──
+    {"id": "base_pivot_line",   "type": "line",   "color": "#cccccc", "style": "ref",
      "from": "base", "to": "pivot"},
-    {"id": "rot_axis",          "type": "line",   "color": "#bbbbbb", "style": "ref",
+    {"id": "rot_axis",          "type": "line",   "color": "#cccccc", "style": "ref",
      "from": "rot_axis_start", "to": "rot_axis_end"},
-    {"id": "servo_r_circle",    "type": "circle", "color": "#bbbbbb", "center": "servo_r", "radius_param": "R", "style": "ref"},
-    {"id": "servo_l_circle",    "type": "circle", "color": "#bbbbbb", "center": "servo_l", "radius_param": "R", "style": "ref"},
+    {"id": "servo_r_circle",    "type": "circle", "color": "#cccccc", "center": "servo_r", "radius_param": "R", "style": "ref"},
+    {"id": "servo_l_circle",    "type": "circle", "color": "#cccccc", "center": "servo_l", "radius_param": "R", "style": "ref"},
 
-    # ── spheres ──
-    {"id": "base_sphere",       "type": "sphere", "color": "#00cc44", "label": "base",      "radius": 1.5, "point": "base"},
-    {"id": "pivot_sphere",      "type": "sphere", "color": "#0088ff", "label": "pivot",     "radius": 1.5, "point": "pivot"},
-    {"id": "arm_sphere",        "type": "sphere", "color": "#ddaa00", "label": "arm",       "radius": 1.2, "point": "arm"},
-    {"id": "proximal_sphere",   "type": "sphere", "color": "#3388cc", "label": "proximal",  "radius": 1.5, "point": "proximal"},
-    {"id": "upright_sphere",    "type": "sphere", "color": "#44aa44", "label": "upright",   "radius": 1.5, "point": "upright"},
-    {"id": "tip_sphere",        "type": "sphere", "color": "#22cc66", "label": "tip",       "radius": 1.2, "point": "tip"},
-    {"id": "bar_upper_sphere",  "type": "sphere", "color": "#ee3333", "label": "bar_upper", "radius": 1.5, "point": "bar_upper"},
-    {"id": "bar_lower_sphere",  "type": "sphere", "color": "#ee3333", "label": "bar_lower", "radius": 1.5, "point": "bar_lower"},
-    {"id": "servo_r_sphere",    "type": "sphere", "color": "#333333", "label": "servo_r",   "radius": 1.0, "point": "servo_r"},
-    {"id": "servo_l_sphere",    "type": "sphere", "color": "#333333", "label": "servo_l",   "radius": 1.0, "point": "servo_l"},
-    {"id": "link_r_sphere",     "type": "sphere", "color": "#ff8800", "label": "link_r",    "radius": 1.5, "point": "link_r"},
-    {"id": "link_l_sphere",     "type": "sphere", "color": "#ff8800", "label": "link_l",    "radius": 1.5, "point": "link_l"},
+    # ── spheres (all same tone) ──
+    {"id": "base_sphere",       "type": "sphere", "color": "#3a3a3a", "label": "base",      "radius": 1.5, "point": "base"},
+    {"id": "pivot_sphere",      "type": "sphere", "color": "#3a3a3a", "label": "pivot",     "radius": 1.5, "point": "pivot"},
+    {"id": "arm_sphere",        "type": "sphere", "color": "#3a3a3a", "label": "arm",       "radius": 1.2, "point": "arm"},
+    {"id": "proximal_sphere",   "type": "sphere", "color": "#3a3a3a", "label": "proximal",  "radius": 1.5, "point": "proximal"},
+    {"id": "upright_sphere",    "type": "sphere", "color": "#3a3a3a", "label": "upright",   "radius": 1.5, "point": "upright"},
+    {"id": "tip_sphere",        "type": "sphere", "color": "#3a3a3a", "label": "tip",       "radius": 1.2, "point": "tip"},
+    {"id": "bar_upper_sphere",  "type": "sphere", "color": "#3a3a3a", "label": "bar_upper", "radius": 1.5, "point": "bar_upper"},
+    {"id": "bar_lower_sphere",  "type": "sphere", "color": "#3a3a3a", "label": "bar_lower", "radius": 1.5, "point": "bar_lower"},
+    {"id": "servo_r_sphere",    "type": "sphere", "color": "#3a3a3a", "label": "servo_r",   "radius": 1.0, "point": "servo_r"},
+    {"id": "servo_l_sphere",    "type": "sphere", "color": "#3a3a3a", "label": "servo_l",   "radius": 1.0, "point": "servo_l"},
+    {"id": "link_r_sphere",     "type": "sphere", "color": "#3a3a3a", "label": "link_r",    "radius": 1.5, "point": "link_r"},
+    {"id": "link_l_sphere",     "type": "sphere", "color": "#3a3a3a", "label": "link_l",    "radius": 1.5, "point": "link_l"},
 
-    # ── active (solid, saturated) ──
-    {"id": "pivot_arm_line",    "type": "line",   "color": "#ff8800", "from": "pivot", "to": "arm"},
-    {"id": "pivot_proximal_line","type": "line",  "color": "#2266aa", "from": "pivot", "to": "proximal"},
-    {"id": "pivot_upright_line","type": "line",   "color": "#338833", "from": "pivot", "to": "upright"},
-    {"id": "upright_tip_line",  "type": "line",   "color": "#22aa55", "from": "upright", "to": "tip"},
-    {"id": "bar_line",          "type": "line",   "color": "#aa00dd", "from": "bar_upper", "to": "bar_lower"},
+    # ── active (solid, dark) ──
+    {"id": "pivot_arm_line",    "type": "line",   "color": "#2a2a2a", "from": "pivot", "to": "arm"},
+    {"id": "pivot_proximal_line","type": "line",  "color": "#2a2a2a", "from": "pivot", "to": "proximal"},
+    {"id": "pivot_upright_line","type": "line",   "color": "#2a2a2a", "from": "pivot", "to": "upright"},
+    {"id": "upright_tip_line",  "type": "line",   "color": "#2a2a2a", "from": "upright", "to": "tip"},
+    {"id": "bar_line",          "type": "line",   "color": "#2a2a2a", "from": "bar_upper", "to": "bar_lower"},
 
-    # ── passive (short dash, same color family) ──
-    {"id": "proximal_upright_line","type": "line","color": "#5588aa", "style": "passive",
+    # ── passive (short dash, medium grey) ──
+    {"id": "proximal_upright_line","type": "line","color": "#888888", "style": "passive",
      "from": "proximal", "to": "upright"},
-    {"id": "link_right_line",   "type": "line",   "color": "#cc5555", "style": "passive",
+    {"id": "link_right_line",   "type": "line",   "color": "#888888", "style": "passive",
      "from": "bar_upper", "to": "link_r"},
-    {"id": "link_left_line",    "type": "line",   "color": "#5577cc", "style": "passive",
+    {"id": "link_left_line",    "type": "line",   "color": "#888888", "style": "passive",
      "from": "bar_lower", "to": "link_l"},
 ]
 
