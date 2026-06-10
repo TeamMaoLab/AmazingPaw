@@ -1,5 +1,6 @@
 /**
  * Three.js scene — rendering, element creation, highlight, labels.
+ * Dual camera: perspective for orbit, orthographic for axis views.
  */
 import * as THREE from '/static/lib/three.module.js';
 import { OrbitControls } from '/static/lib/OrbitControls.js';
@@ -8,8 +9,12 @@ const SPHERE_SEG = 16;
 const AXIS_LENGTH = 8;
 const DEFAULT_CAM_POS = [50, 60, 60];
 const DEFAULT_CAM_TARGET = [10, 0, 20];
+const ORTHO_SIZE = 80;
+const VIEW_DIST = 80;
+const VIEW_TARGET = new THREE.Vector3(10, 0, 20);
 
-let scene, camera, renderer, controls, raycaster, mouse;
+let scene, renderer, controls, raycaster, mouse;
+let perspCam, orthoCam, activeCam;
 let viewport;
 let mechDef;
 
@@ -29,16 +34,25 @@ export function initScene(containerEl, definition, onNodeClick) {
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xffffff);
 
-    camera = new THREE.PerspectiveCamera(50, w / h, 0.1, 5000);
-    camera.position.set(...DEFAULT_CAM_POS);
-    camera.up.set(0, 0, 1);
+    perspCam = new THREE.PerspectiveCamera(50, w / h, 0.1, 5000);
+    perspCam.position.set(...DEFAULT_CAM_POS);
+    perspCam.up.set(0, 0, 1);
+
+    const aspect = w / h;
+    orthoCam = new THREE.OrthographicCamera(
+        -ORTHO_SIZE * aspect / 2, ORTHO_SIZE * aspect / 2,
+        ORTHO_SIZE / 2, -ORTHO_SIZE / 2, 0.1, 5000
+    );
+    orthoCam.up.set(0, 0, 1);
+
+    activeCam = perspCam;
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(w, h);
     renderer.setPixelRatio(window.devicePixelRatio);
     containerEl.appendChild(renderer.domElement);
 
-    controls = new OrbitControls(camera, renderer.domElement);
+    controls = new OrbitControls(activeCam, renderer.domElement);
     controls.target.set(...DEFAULT_CAM_TARGET);
     controls.update();
 
@@ -60,6 +74,34 @@ export function initScene(containerEl, definition, onNodeClick) {
     renderer.domElement.addEventListener('click', (e) => onCanvasClick(e, onNodeClick));
     window.addEventListener('resize', onResize);
     animate();
+}
+
+function switchCamera(cam) {
+    if (activeCam === cam) return;
+    cam.position.copy(activeCam.position);
+    cam.up.copy(activeCam.up);
+    activeCam = cam;
+    controls.object = activeCam;
+    controls.update();
+}
+
+export function resetCamera() {
+    switchCamera(perspCam);
+    activeCam.position.set(...DEFAULT_CAM_POS);
+    activeCam.up.set(0, 0, 1);
+    controls.target.set(...DEFAULT_CAM_TARGET);
+    controls.update();
+}
+
+export function setView(axis, sign) {
+    switchCamera(orthoCam);
+    const pos = VIEW_TARGET.clone();
+    if (axis === 'x') { pos.x += sign * VIEW_DIST; activeCam.up.set(0, 0, 1); }
+    if (axis === 'y') { pos.y += sign * VIEW_DIST; activeCam.up.set(0, 0, 1); }
+    if (axis === 'z') { pos.z += sign * VIEW_DIST; activeCam.up.set(0, sign, 0); }
+    activeCam.position.copy(pos);
+    controls.target.copy(VIEW_TARGET);
+    controls.update();
 }
 
 export function updateScene(data) {
@@ -133,26 +175,6 @@ export function clearHighlight(frameNames) {
         if (!fa) continue;
         fa.arrows.forEach(a => { setObjOpacity(a.line, 1.0); setObjOpacity(a.cone, 1.0); });
     }
-}
-
-export function resetCamera() {
-    camera.position.set(...DEFAULT_CAM_POS);
-    camera.up.set(0, 0, 1);
-    controls.target.set(...DEFAULT_CAM_TARGET);
-    controls.update();
-}
-
-const VIEW_DIST = 80;
-const VIEW_TARGET = new THREE.Vector3(10, 0, 20);
-
-export function setView(axis, sign) {
-    const pos = VIEW_TARGET.clone();
-    if (axis === 'x') { pos.x += sign * VIEW_DIST; camera.up.set(0, 0, 1); }
-    if (axis === 'y') { pos.y += sign * VIEW_DIST; camera.up.set(0, 0, 1); }
-    if (axis === 'z') { pos.z += sign * VIEW_DIST; camera.up.set(0, sign, 0); }
-    camera.position.copy(pos);
-    controls.target.copy(VIEW_TARGET);
-    controls.update();
 }
 
 // ── internal ──
@@ -240,7 +262,7 @@ function onCanvasClick(event, onNodeClick) {
     const rect = renderer.domElement.getBoundingClientRect();
     mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
     mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-    raycaster.setFromCamera(mouse, camera);
+    raycaster.setFromCamera(mouse, activeCam);
     const meshes = Object.entries(pointMeshes).filter(([n]) => !n.startsWith('_')).map(([,m]) => m);
     const hits = raycaster.intersectObjects(meshes);
     if (hits.length === 0) return;
@@ -253,7 +275,7 @@ function updateLabels() {
     for (const [name, div] of Object.entries(labelDivs)) {
         const mesh = pointMeshes[name];
         if (!mesh || !mesh.position || !mesh.position.clone) continue;
-        const v = mesh.position.clone().project(camera);
+        const v = mesh.position.clone().project(activeCam);
         div.style.left = ((v.x * 0.5 + 0.5) * rect.width + 8) + 'px';
         div.style.top = ((-v.y * 0.5 + 0.5) * rect.height - 6) + 'px';
         div.style.display = v.z < 1 ? '' : 'none';
@@ -261,7 +283,7 @@ function updateLabels() {
     for (const fname of mechDef.frame_names) {
         const fa = frameAxes[fname]; const div = frameLabelDivs[fname];
         if (!fa || !div) continue;
-        const v = fa.group.position.clone().project(camera);
+        const v = fa.group.position.clone().project(activeCam);
         div.style.left = ((v.x * 0.5 + 0.5) * rect.width + 12) + 'px';
         div.style.top = ((-v.y * 0.5 + 0.5) * rect.height + 2) + 'px';
         div.style.display = v.z < 1 ? '' : 'none';
@@ -269,14 +291,21 @@ function updateLabels() {
 }
 
 function onResize() {
-    camera.aspect = viewport.clientWidth / viewport.clientHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(viewport.clientWidth, viewport.clientHeight);
+    const w = viewport.clientWidth, h = viewport.clientHeight;
+    perspCam.aspect = w / h;
+    perspCam.updateProjectionMatrix();
+    const aspect = w / h;
+    orthoCam.left = -ORTHO_SIZE * aspect / 2;
+    orthoCam.right = ORTHO_SIZE * aspect / 2;
+    orthoCam.top = ORTHO_SIZE / 2;
+    orthoCam.bottom = -ORTHO_SIZE / 2;
+    orthoCam.updateProjectionMatrix();
+    renderer.setSize(w, h);
 }
 
 function animate() {
     requestAnimationFrame(animate);
     controls.update();
     updateLabels();
-    renderer.render(scene, camera);
+    renderer.render(scene, activeCam);
 }
