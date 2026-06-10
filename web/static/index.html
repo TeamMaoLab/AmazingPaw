@@ -515,7 +515,9 @@ function createEl(el) {
         const positions = new Float32Array((seg + 1) * 3);
         const geom = new THREE.BufferGeometry();
         geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        const mat = new THREE.LineBasicMaterial({ color: el.color, transparent: true, opacity: 1.0 });
+        const mat = el.dash
+            ? new THREE.LineDashedMaterial({ color: el.color, transparent: true, opacity: 1.0, dashSize: 2, gapSize: 1.5 })
+            : new THREE.LineBasicMaterial({ color: el.color, transparent: true, opacity: 1.0 });
         const line = new THREE.Line(geom, mat);
         scene.add(line);
         circleObjects[el.id] = line;
@@ -579,6 +581,7 @@ function updateScene(data) {
                 p[j]=c[0]; p[j+1]=c[1]+r*Math.cos(a); p[j+2]=c[2]+r*Math.sin(a);
             }
             line.geometry.attributes.position.needsUpdate = true;
+            if (el.dash) line.computeLineDistances();
         }
     }
 
