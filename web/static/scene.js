@@ -147,8 +147,11 @@ export function updateScene(data) {
          new THREE.Vector3(...axes[1]).normalize(),
          new THREE.Vector3(...axes[2]).normalize()
         ].forEach((dir, i) => {
-            fa.arrows[i].setDirection(dir);
-            fa.arrows[i].setLength(AXIS_LENGTH, 2, 1.2);
+            const end = dir.clone().multiplyScalar(AXIS_LENGTH);
+            const pos = fa.lines[i].geometry.attributes.position.array;
+            pos[0]=0; pos[1]=0; pos[2]=0;
+            pos[3]=end.x; pos[4]=end.y; pos[5]=end.z;
+            fa.lines[i].geometry.attributes.position.needsUpdate = true;
         });
     }
     updateLabels();
@@ -165,7 +168,7 @@ export function applyHighlight(relatedNames, frameNames) {
         const fa = frameAxes[fname];
         if (!fa) continue;
         const op = relatedNames.has(fname) ? 1.0 : 0.08;
-        fa.arrows.forEach(a => { setObjOpacity(a.line, op); setObjOpacity(a.cone, op); });
+        fa.lines.forEach(l => { setObjOpacity(l, op); });
     }
 }
 
@@ -176,7 +179,7 @@ export function clearHighlight(frameNames) {
     for (const fname of frameNames) {
         const fa = frameAxes[fname];
         if (!fa) continue;
-        fa.arrows.forEach(a => { setObjOpacity(a.line, 1.0); setObjOpacity(a.cone, 1.0); });
+        fa.lines.forEach(l => { setObjOpacity(l, 1.0); });
     }
 }
 
@@ -211,14 +214,16 @@ function addWorldAxis(a, b, color, label) {
 
 function createFrameAxes(name) {
     const group = new THREE.Group();
-    const colors = [0xee4444, 0x44bb44, 0x4488ee];
+    const colors = [0xcc4444, 0x44aa44, 0x4488cc];
     const dirs = [new THREE.Vector3(1,0,0), new THREE.Vector3(0,1,0), new THREE.Vector3(0,0,1)];
-    const arrows = dirs.map((dir, i) => {
-        const arrow = new THREE.ArrowHelper(dir, new THREE.Vector3(0,0,0), AXIS_LENGTH, colors[i], 2, 1.2);
-        arrow.line.material.transparent = true; arrow.line.material.opacity = 1.0;
-        arrow.cone.material.transparent = true; arrow.cone.material.opacity = 1.0;
-        group.add(arrow);
-        return arrow;
+    const lines = dirs.map((dir, i) => {
+        const end = dir.clone().multiplyScalar(AXIS_LENGTH);
+        const geom = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), end]);
+        const mat = new THREE.LineBasicMaterial({ color: colors[i], transparent: true, opacity: 1.0 });
+        const line = new THREE.Line(geom, mat);
+        line.frustumCulled = false;
+        group.add(line);
+        return line;
     });
     scene.add(group);
 
@@ -227,7 +232,7 @@ function createFrameAxes(name) {
     div.textContent = name;
     viewport.appendChild(div);
     frameLabelDivs[name] = div;
-    frameAxes[name] = { group, arrows };
+    frameAxes[name] = { group, lines };
 }
 
 function createEl(el) {
