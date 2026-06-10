@@ -1,5 +1,5 @@
 """
-FastAPI 服务 — 机构运动学 Web 工具后端。
+FastAPI 服务 — 机构生长定义工具。
 
 启动: uvicorn web.server:app --reload
 """
@@ -11,39 +11,28 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from web.mechanism import get_mechanism_definition, solve
+from web.mechanism import compute, get_mechanism_definition
 
 STATIC_DIR = Path(__file__).parent / "static"
 
-app = FastAPI(title="Finger Mechanism Kinematics")
+app = FastAPI(title="Finger Mechanism Growth Tool")
 
 
-# ---- 请求/响应模型 ----
+class ComputeRequest(BaseModel):
+    params: dict[str, float]
 
-class SolveRequest(BaseModel):
-    fixed_params: dict[str, float]
-    active_params: dict[str, float]
-
-
-# ---- API 端点 ----
 
 @app.get("/api/mechanism/default")
-async def api_mechanism_default():
-    """返回机构定义（参数规格 + 生长树 + 可视化元素）"""
+async def api_definition():
+    """返回机构定义（生长参数规格 + 生长树 + 可视化元素）"""
     return get_mechanism_definition()
 
 
-@app.post("/api/solve")
-async def api_solve(req: SolveRequest):
-    """正运动学求解：给定 β₁, β₂ → 求 α, θ + 所有点坐标"""
-    return solve(
-        fixed=req.fixed_params,
-        beta1_deg=req.active_params["beta1"],
-        beta2_deg=req.active_params["beta2"],
-    )
+@app.post("/api/compute")
+async def api_compute(req: ComputeRequest):
+    """给定生长参数，计算所有点坐标、坐标系、连杆长度"""
+    return compute(req.params)
 
-
-# ---- 静态文件 ----
 
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
