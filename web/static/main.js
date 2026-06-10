@@ -122,6 +122,14 @@ async function init() {
     Scene.initScene(document.getElementById('viewport'), mechDef, selectNode);
 
     document.getElementById('btn-reset-cam').addEventListener('click', Scene.resetCamera);
+    document.querySelectorAll('.view-btns button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const v = btn.dataset.view;
+            const axis = v[1].toLowerCase();
+            const sign = v[0] === '+' ? 1 : -1;
+            Scene.setView(axis, sign);
+        });
+    });
     document.getElementById('loading').classList.add('hidden');
     document.getElementById('status').textContent = 'Ready';
     document.getElementById('footer').textContent = 'Ready';

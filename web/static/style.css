@@ -60,5 +60,12 @@ body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: #
 
 .footer { height: 28px; background: #fff; border-top: 1px solid #ddd; display: flex; align-items: center; padding: 0 16px; font-size: 11px; color: #aaa; }
 
+/* viewport view buttons */
+.view-btns { position: absolute; top: 8px; left: 8px; display: flex; gap: 2px; z-index: 10; }
+.view-btns button { width: 28px; height: 24px; font-size: 11px; font-family: "SF Mono", Menlo, monospace;
+    border: 1px solid #ccc; border-radius: 3px; background: rgba(255,255,255,0.9); color: #555; cursor: pointer; }
+.view-btns button:hover { background: #e8f0fe; border-color: #4488ff; color: #1a56a0; }
+.view-btns button.sep { margin-left: 4px; }
+
 .loading-overlay { position: fixed; inset: 0; background: #f5f5f5; display: flex; align-items: center; justify-content: center; z-index: 999; }
 .loading-overlay.hidden { display: none; }

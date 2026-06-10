@@ -142,6 +142,19 @@ export function resetCamera() {
     controls.update();
 }
 
+const VIEW_DIST = 80;
+const VIEW_TARGET = new THREE.Vector3(10, 0, 20);
+
+export function setView(axis, sign) {
+    const pos = VIEW_TARGET.clone();
+    if (axis === 'x') { pos.x += sign * VIEW_DIST; camera.up.set(0, 0, 1); }
+    if (axis === 'y') { pos.y += sign * VIEW_DIST; camera.up.set(0, 0, 1); }
+    if (axis === 'z') { pos.z += sign * VIEW_DIST; camera.up.set(0, sign, 0); }
+    camera.position.copy(pos);
+    controls.target.copy(VIEW_TARGET);
+    controls.update();
+}
+
 // ── internal ──
 
 function setObjOpacity(obj, op) {
