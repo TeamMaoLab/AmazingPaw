@@ -1,0 +1,20 @@
+[project]
+name = "hands"
+version = "0.1.0"
+description = "Robotic hand kinematics modeling and visualization"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy",
+    "matplotlib",
+    "ipywidgets",
+    "pyyaml",
+    "jupyter",
+    "plotly>=6.7.0",
+    "scipy>=1.17.1",
+    "pybullet>=3.2.7",
+    "mujoco>=3.9.0",
+]
+
+[tool.uv]
+dev-dependencies = []
