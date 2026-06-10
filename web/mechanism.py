@@ -109,6 +109,7 @@ VIS_ELEMENTS = [
     {"id": "pivot_proximal_line","type": "line",   "color": "#2266aa", "from": "pivot", "to": "proximal"},
     {"id": "upright_sphere",    "type": "sphere", "color": "#44aa44", "label": "upright",   "radius": 1.5, "point": "upright"},
     {"id": "pivot_upright_line","type": "line",    "color": "#338833", "from": "pivot", "to": "upright"},
+    {"id": "proximal_upright_line","type": "line", "color": "#558899", "dash": True, "from": "proximal", "to": "upright"},
     {"id": "tip_sphere",        "type": "sphere", "color": "#22cc66", "label": "tip",        "radius": 1.2, "point": "tip"},
     {"id": "upright_tip_line",  "type": "line",    "color": "#22aa55", "from": "upright", "to": "tip"},
     {"id": "bar_upper_sphere",  "type": "sphere", "color": "#ee3333", "label": "bar_upper", "radius": 1.5, "point": "bar_upper"},

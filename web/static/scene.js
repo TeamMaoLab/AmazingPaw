@@ -82,6 +82,7 @@ function switchCamera(cam) {
     cam.up.copy(activeCam.up);
     activeCam = cam;
     controls.object = activeCam;
+    activeCam.updateProjectionMatrix();
     controls.update();
 }
 
@@ -95,12 +96,14 @@ export function resetCamera() {
 
 export function setView(axis, sign) {
     switchCamera(orthoCam);
+    orthoCam.zoom = 1;
     const pos = VIEW_TARGET.clone();
     if (axis === 'x') { pos.x += sign * VIEW_DIST; activeCam.up.set(0, 0, 1); }
     if (axis === 'y') { pos.y += sign * VIEW_DIST; activeCam.up.set(0, 0, 1); }
     if (axis === 'z') { pos.z += sign * VIEW_DIST; activeCam.up.set(0, sign, 0); }
     activeCam.position.copy(pos);
     controls.target.copy(VIEW_TARGET);
+    activeCam.updateProjectionMatrix();
     controls.update();
 }
 
