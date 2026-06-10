@@ -145,13 +145,13 @@ const nodeSpans = {};      // treeNodeName -> <span> element
 
 // 高亮状态
 let selectedName = null;
-const origColors = {};     // mesh uuid -> original hex color
+const FADED_OPACITY = 0.15;
 
 const SPHERE_SEG = 16;
 const AXIS_LENGTH = 8;
 const FRAME_NAMES = ['cps', 'cpe', 'rotated', 'servo1', 'servo2'];
 
-// 帧到子点的映射（用于高亮）
+// 帧到子点的映射
 const frameChildPoints = {
     'world': [],
     'cps': ['CPS'],
@@ -234,101 +234,108 @@ function buildTree(node, container) {
 }
 
 // ============================================================
-// 选中 / 高亮
+// 选中 / 高亮（透明度方案）
 // ============================================================
-function selectNode(name) {
-    // 取消旧选中
-    if (selectedName) {
-        unhighlightNode(selectedName);
+
+// 收集选中节点关联的所有可高亮名称
+function getRelatedNames(name) {
+    const names = new Set();
+    const isFrame = FRAME_NAMES.includes(name);
+
+    if (isFrame) {
+        names.add(name); // 帧本身的轴
+        for (const p of (frameChildPoints[name] || [])) {
+            names.add(p);
+            for (const el of (pointToElements[p] || [])) names.add(el);
+        }
+    } else {
+        names.add(name);
+        for (const el of (pointToElements[name] || [])) names.add(el);
+        // 如果点属于某个帧，也保留该帧
+        for (const [fn, pts] of Object.entries(frameChildPoints)) {
+            if (pts.includes(name)) names.add(fn);
+        }
     }
-    // 如果再次点击同一个，取消选中
+    return names;
+}
+
+function selectNode(name) {
     if (selectedName === name) {
+        // 再次点击取消选中，恢复所有
         selectedName = null;
         clearTreeSelection();
+        setAllOpacity(1.0);
         return;
     }
 
     selectedName = name;
-    // 树高亮
     clearTreeSelection();
     const span = nodeSpans[name];
     if (span) span.classList.add('selected');
 
-    // 3D 高亮
-    highlightNode(name);
+    applyHighlight(name);
 }
 
 function clearTreeSelection() {
     document.querySelectorAll('.tree .node').forEach(n => n.classList.remove('selected'));
 }
 
-function highlightNode(name) {
-    // 判断是帧还是点
-    const isFrame = FRAME_NAMES.includes(name);
+function applyHighlight(name) {
+    const related = getRelatedNames(name);
 
-    if (isFrame) {
-        // 高亮帧的坐标轴
-        const fa = frameAxes[name];
-        if (fa) {
-            fa.arrows.forEach(a => { a.line.material.linewidth = 4; });
-        }
-        // 高亮帧标签
-        const fl = frameLabelDivs[name];
-        if (fl) fl.style.fontWeight = 'bold';
-        // 高亮帧的子点
-        const pts = frameChildPoints[name] || [];
-        pts.forEach(p => highlightMesh(p));
-    } else {
-        // 高亮点本身
-        highlightMesh(name);
-        // 高亮相关的线和圆
-        const els = pointToElements[name] || [];
-        els.forEach(elId => highlightLineOrCircle(elId));
+    // 所有点球体
+    for (const [pname, mesh] of Object.entries(pointMeshes)) {
+        if (pname.startsWith('_')) continue;
+        setObjOpacity(mesh, related.has(pname) ? 1.0 : FADED_OPACITY);
+    }
+
+    // 所有线
+    for (const [eid, line] of Object.entries(lineObjects)) {
+        setObjOpacity(line, related.has(eid) ? 1.0 : FADED_OPACITY);
+    }
+
+    // 所有圆
+    for (const [eid, line] of Object.entries(circleObjects)) {
+        setObjOpacity(line, related.has(eid) ? 1.0 : FADED_OPACITY);
+    }
+
+    // 所有帧轴
+    for (const fname of FRAME_NAMES) {
+        const fa = frameAxes[fname];
+        if (!fa) continue;
+        const op = related.has(fname) ? 1.0 : FADED_OPACITY;
+        fa.arrows.forEach(a => {
+            setObjOpacity(a.line, op);
+            setObjOpacity(a.cone, op);
+        });
     }
 }
 
-function unhighlightNode(name) {
-    const isFrame = FRAME_NAMES.includes(name);
-    if (isFrame) {
-        const fa = frameAxes[name];
-        if (fa) fa.arrows.forEach(a => { a.line.material.linewidth = 2; });
-        const fl = frameLabelDivs[name];
-        if (fl) fl.style.fontWeight = 'normal';
-        const pts = frameChildPoints[name] || [];
-        pts.forEach(p => unhighlightMesh(p));
-    } else {
-        unhighlightMesh(name);
-        const els = pointToElements[name] || [];
-        els.forEach(elId => unhighlightLineOrCircle(elId));
+function setAllOpacity(op) {
+    for (const [pname, mesh] of Object.entries(pointMeshes)) {
+        if (pname.startsWith('_')) continue;
+        setObjOpacity(mesh, op);
+    }
+    for (const line of Object.values(lineObjects)) setObjOpacity(line, op);
+    for (const line of Object.values(circleObjects)) setObjOpacity(line, op);
+    for (const fname of FRAME_NAMES) {
+        const fa = frameAxes[fname];
+        if (!fa) continue;
+        fa.arrows.forEach(a => {
+            setObjOpacity(a.line, op);
+            setObjOpacity(a.cone, op);
+        });
     }
 }
 
-function highlightMesh(pointName) {
-    const mesh = pointMeshes[pointName];
-    if (!mesh) return;
-    mesh.scale.set(1.6, 1.6, 1.6);
-}
-
-function unhighlightMesh(pointName) {
-    const mesh = pointMeshes[pointName];
-    if (!mesh) return;
-    mesh.scale.set(1, 1, 1);
-}
-
-function highlightLineOrCircle(elId) {
-    const obj = lineObjects[elId] || circleObjects[elId];
-    if (!obj) return;
-    obj.material.linewidth = 4;
-    obj.material.opacity = 1.0;
-    obj.material.transparent = false;
-}
-
-function unhighlightLineOrCircle(elId) {
-    const obj = lineObjects[elId] || circleObjects[elId];
-    if (!obj) return;
-    obj.material.linewidth = 2;
-    obj.material.opacity = 1.0;
-    obj.material.transparent = false;
+function setObjOpacity(obj, op) {
+    if (!obj || !obj.material) return;
+    obj.material.transparent = op < 1.0;
+    obj.material.opacity = op;
+    // 对于 dashed lines 需要保持 transparent
+    if (obj.material.isLineDashedMaterial && op >= 1.0) {
+        obj.material.transparent = false;
+    }
 }
 
 // ============================================================
@@ -604,7 +611,7 @@ function updateScene(data) {
 
     // 如果有选中状态，重新应用高亮
     if (selectedName) {
-        highlightNode(selectedName);
+        applyHighlight(selectedName);
     }
 }
 
