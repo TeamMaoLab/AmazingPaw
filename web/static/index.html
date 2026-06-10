@@ -6,69 +6,74 @@
 <title>Finger Mechanism Kinematics</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: #1a1a2e; color: #e0e0e0; overflow: hidden; height: 100vh; }
+body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; color: #333; overflow: hidden; height: 100vh; }
 
-/* 顶栏 */
-.header { height: 44px; background: #16213e; display: flex; align-items: center; padding: 0 16px; border-bottom: 1px solid #0f3460; }
-.header h1 { font-size: 15px; font-weight: 600; color: #e0e0e0; }
-.header .status { margin-left: auto; font-size: 12px; color: #8899aa; }
-.header .status.solving { color: #ffcc00; }
-.header .status.error { color: #ff4444; }
+.header { height: 44px; background: #fff; display: flex; align-items: center; padding: 0 16px; border-bottom: 1px solid #ddd; }
+.header h1 { font-size: 15px; font-weight: 600; color: #333; }
+.header .status { margin-left: auto; font-size: 12px; color: #999; }
+.header .status.solving { color: #e6a817; }
+.header .status.error { color: #e04040; }
 
-/* 三栏布局 */
 .main { display: flex; height: calc(100vh - 44px - 28px); }
 
-/* 左栏：生长树 */
-.panel-tree { width: 240px; min-width: 240px; background: #16213e; border-right: 1px solid #0f3460; overflow-y: auto; padding: 12px; }
-.panel-tree h2 { font-size: 13px; color: #8899aa; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+/* 左栏 */
+.panel-tree { width: 240px; min-width: 240px; background: #fff; border-right: 1px solid #ddd; overflow-y: auto; padding: 12px; }
+.panel-tree h2 { font-size: 13px; color: #999; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
 
-.tree { list-style: none; padding-left: 16px; }
-.tree .root { padding-left: 0; }
-.tree li { position: relative; padding: 3px 0; }
-.tree li::before { content: ''; position: absolute; left: -12px; top: 12px; width: 10px; height: 1px; background: #334; }
-.tree li::after { content: ''; position: absolute; left: -12px; top: 0; width: 1px; height: 12px; background: #334; }
-.tree li:last-child::after { height: 12px; }
-.tree .node { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; padding: 2px 6px; border-radius: 4px; font-size: 13px; transition: background 0.15s; }
-.tree .node:hover { background: #0f3460; }
-.tree .node.active { background: #0f3460; color: #fff; }
-.tree .icon { font-size: 10px; }
-.tree .icon.frame { color: #4488ff; }
-.tree .icon.point { color: #ff8844; }
-.tree .step-badge { font-size: 10px; background: #0f3460; color: #8899aa; padding: 1px 5px; border-radius: 3px; margin-left: 4px; }
+.tree ul { list-style: none; padding-left: 18px; }
+.tree > ul { padding-left: 0; }
+.tree li { position: relative; padding: 2px 0; }
+.tree li::before { content: ''; position: absolute; left: -12px; top: 13px; width: 10px; height: 1px; background: #ddd; }
+.tree li::after { content: ''; position: absolute; left: -12px; top: 0; width: 1px; height: 13px; background: #ddd; }
+.tree li:last-child::after { height: 13px; }
+.tree .node { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; padding: 3px 8px; border-radius: 4px; font-size: 13px; border: 2px solid transparent; transition: background 0.12s, border-color 0.12s; }
+.tree .node:hover { background: #f0f0f0; }
+.tree .node.selected { background: #e8f0fe; border-color: #4488ff; color: #1a56a0; }
+.icon { font-size: 10px; }
+.icon.frame { color: #4488ff; }
+.icon.point { color: #e07020; }
+.step-badge { font-size: 10px; background: #eef; color: #7799cc; padding: 1px 5px; border-radius: 3px; margin-left: 4px; }
 
-/* 中栏：3D 视口 */
-.viewport { flex: 1; position: relative; }
+/* 中栏 */
+.viewport { flex: 1; position: relative; overflow: hidden; }
 .viewport canvas { display: block; }
+.viewport .label { position: absolute; color: #555; font-size: 11px; pointer-events: none; white-space: nowrap; font-weight: 500; }
+.viewport .frame-label { position: absolute; color: #888; font-size: 10px; pointer-events: none; white-space: nowrap; font-style: italic; }
 
-/* 右栏：参数面板 */
-.panel-params { width: 300px; min-width: 300px; background: #16213e; border-left: 1px solid #0f3460; overflow-y: auto; padding: 12px; }
-.panel-params h2 { font-size: 13px; color: #8899aa; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
-
+/* 右栏 */
+.panel-params { width: 300px; min-width: 300px; background: #fff; border-left: 1px solid #ddd; overflow-y: auto; padding: 12px; }
+.panel-params h2 { font-size: 13px; color: #999; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
 .section { margin-bottom: 16px; }
-.section-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 6px 0; border-bottom: 1px solid #0f3460; }
+.section-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 6px 0; border-bottom: 1px solid #eee; }
 .section-header h3 { font-size: 13px; font-weight: 500; }
-.section-header .toggle { font-size: 11px; color: #8899aa; }
+.section-header .toggle { font-size: 11px; color: #999; }
 .section-body { padding: 4px 0; }
 .section-body.collapsed { display: none; }
 
 .param-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
-.param-row label { font-size: 12px; min-width: 90px; color: #aabbcc; }
-.param-row input[type="range"] { flex: 1; height: 4px; -webkit-appearance: none; background: #0f3460; border-radius: 2px; outline: none; }
+.param-row label { font-size: 12px; min-width: 100px; color: #666; }
+.param-row input[type="range"] { flex: 1; height: 4px; -webkit-appearance: none; background: #ddd; border-radius: 2px; outline: none; }
 .param-row input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; background: #4488ff; border-radius: 50%; cursor: pointer; }
-.param-row .val { font-size: 12px; min-width: 52px; text-align: right; font-family: "SF Mono", Menlo, monospace; color: #e0e0e0; }
+.param-row .val { font-size: 12px; min-width: 56px; text-align: right; font-family: "SF Mono", Menlo, monospace; color: #333; }
 
-/* 求解结果 */
 .results { padding: 4px 0; }
 .result-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; }
-.result-row .label { color: #aabbcc; }
-.result-row .value { font-family: "SF Mono", Menlo, monospace; color: #44ff88; }
-.result-row .value.fail { color: #ff4444; }
+.result-row .rl { color: #888; }
+.result-row .value { font-family: "SF Mono", Menlo, monospace; color: #2a8a4a; }
+.result-row .value.fail { color: #e04040; }
 
-/* 底栏 */
-.footer { height: 28px; background: #16213e; border-top: 1px solid #0f3460; display: flex; align-items: center; padding: 0 16px; font-size: 11px; color: #556677; }
+.footer { height: 28px; background: #fff; border-top: 1px solid #ddd; display: flex; align-items: center; padding: 0 16px; font-size: 11px; color: #aaa; }
+
+.loading-overlay { position: fixed; inset: 0; background: #f5f5f5; display: flex; align-items: center; justify-content: center; z-index: 999; }
+.loading-overlay.hidden { display: none; }
+.loading-text { font-size: 16px; color: #999; }
 </style>
 </head>
 <body>
+
+<div class="loading-overlay" id="loading">
+    <span class="loading-text">Loading Three.js...</span>
+</div>
 
 <div class="header">
     <h1>Finger Mechanism Kinematics</h1>
@@ -76,184 +81,287 @@ body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: #
 </div>
 
 <div class="main">
-    <!-- 左栏：生长树 -->
     <div class="panel-tree">
         <h2>Growth Tree</h2>
-        <div id="tree-container"></div>
+        <div class="tree" id="tree-container"></div>
     </div>
-
-    <!-- 中栏：3D 视口 -->
     <div class="viewport" id="viewport"></div>
-
-    <!-- 右栏：参数面板 -->
     <div class="panel-params">
         <div class="section">
             <h2>Active Controls</h2>
             <div class="section-body" id="active-sliders"></div>
         </div>
-
         <div class="section">
-            <div class="section-header" onclick="toggleSection('fixed')">
+            <div class="section-header" id="fixed-header">
                 <h3>Fixed Parameters</h3>
-                <span class="toggle" id="fixed-toggle">▼</span>
+                <span class="toggle" id="fixed-toggle">▶</span>
             </div>
             <div class="section-body collapsed" id="fixed-body"></div>
         </div>
-
         <div class="section">
             <h2>Solve Results</h2>
-            <div class="results" id="results">
-                <div class="result-row"><span class="label">alpha</span><span class="value" id="res-alpha">--</span></div>
-                <div class="result-row"><span class="label">theta</span><span class="value" id="res-theta">--</span></div>
-                <div class="result-row"><span class="label">right link</span><span class="value" id="res-link-r">--</span></div>
-                <div class="result-row"><span class="label">left link</span><span class="value" id="res-link-l">--</span></div>
-                <div class="result-row"><span class="label">status</span><span class="value" id="res-status">--</span></div>
+            <div class="results">
+                <div class="result-row"><span class="rl">alpha</span><span class="value" id="res-alpha">--</span></div>
+                <div class="result-row"><span class="rl">theta</span><span class="value" id="res-theta">--</span></div>
+                <div class="result-row"><span class="rl">right link</span><span class="value" id="res-link-r">--</span></div>
+                <div class="result-row"><span class="rl">left link</span><span class="value" id="res-link-l">--</span></div>
+                <div class="result-row"><span class="rl">status</span><span class="value" id="res-status">--</span></div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="footer" id="footer">Ready</div>
+<div class="footer" id="footer">Initializing...</div>
 
-<!-- Three.js from CDN -->
-<script src="https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.170.0/examples/js/controls/OrbitControls.js"></script>
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
+    }
+}
+</script>
 
-<script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
 // ============================================================
 // 全局状态
 // ============================================================
 let mechanismDef = null;
 let currentFixed = {};
 let currentActive = {};
+let lastSolveData = null;
 
-// Three.js 对象
-let scene, camera, renderer, controls;
-let pointMeshes = {};     // name -> THREE.Mesh
-let lineObjects = {};     // id -> THREE.Line
-let circleObjects = {};   // id -> THREE.Line
-let labelDivs = {};       // name -> HTMLDivElement
+let scene, camera, renderer, controls, raycaster, mouse;
+const pointMeshes = {};
+const lineObjects = {};
+const circleObjects = {};
+const labelDivs = {};
+const frameAxes = {};      // name -> { group: THREE.Group, arrows: [Arrow], labelDiv }
+const frameLabelDivs = {};
+const nodeSpans = {};      // treeNodeName -> <span> element
 
-const AXIS_LEN = 20;
-const SPHERE_SEGMENTS = 16;
+// 高亮状态
+let selectedName = null;
+const origColors = {};     // mesh uuid -> original hex color
+
+const SPHERE_SEG = 16;
+const AXIS_LENGTH = 8;
+const FRAME_NAMES = ['cps', 'cpe', 'rotated', 'servo1', 'servo2'];
+
+// 帧到子点的映射（用于高亮）
+const frameChildPoints = {
+    'world': [],
+    'cps': ['CPS'],
+    'cpe': ['CPE'],
+    'rotated': ['A', 'A+', 'A-'],
+    'servo1': ['P1'],
+    'servo2': ['P2'],
+};
+
+// 点到相关线/圆的映射
+const pointToElements = {
+    'CPS': ['cp_line'],
+    'CPE': ['cp_line', 'oa_line', 'rot_axis'],
+    'A':  ['oa_line', 'vert_line'],
+    'A+': ['vert_line', 'link_right'],
+    'A-': ['vert_line', 'link_left'],
+    'P1': ['link_right', 'servo1_circle'],
+    'P2': ['link_left', 'servo2_circle'],
+};
 
 // ============================================================
 // 初始化
 // ============================================================
 async function init() {
-    // 加载机构定义
-    const resp = await fetch('/api/mechanism/default');
-    mechanismDef = await resp.json();
-
-    // 设置默认参数
-    for (const [k, v] of Object.entries(mechanismDef.fixed_params)) {
-        currentFixed[k] = v.value;
+    try {
+        const resp = await fetch('/api/mechanism/default');
+        mechanismDef = await resp.json();
+    } catch (err) {
+        setStatus('Failed to load: ' + err.message, 'error');
+        return;
     }
-    for (const [k, v] of Object.entries(mechanismDef.active_params)) {
-        currentActive[k] = v.value;
-    }
+    for (const [k, v] of Object.entries(mechanismDef.fixed_params)) currentFixed[k] = v.value;
+    for (const [k, v] of Object.entries(mechanismDef.active_params)) currentActive[k] = v.value;
 
-    buildTree(mechanismDef.growth_tree);
+    buildTree(mechanismDef.growth_tree, document.getElementById('tree-container'));
     buildSliders();
+    document.getElementById('fixed-header').addEventListener('click', () => toggleSection('fixed'));
     initThreeJS();
+
+    document.getElementById('loading').classList.add('hidden');
+    setStatus('Ready');
     await doSolve();
 }
 
 // ============================================================
 // 生长树
 // ============================================================
-function buildTree(node, container, isRoot) {
+function buildTree(node, container) {
     const ul = document.createElement('ul');
-    ul.className = isRoot ? 'tree root' : 'tree';
-
     const li = document.createElement('li');
-
     const span = document.createElement('span');
     span.className = 'node';
-    const iconClass = node.type === 'frame' ? 'frame' : 'point';
-    const iconChar = node.type === 'frame' ? '■' : '●';
-    span.innerHTML = `<span class="icon ${iconClass}">${iconChar}</span>${node.name}`;
+
+    const ic = node.type === 'frame' ? 'frame' : 'point';
+    const ch = node.type === 'frame' ? '■' : '●';
+    span.innerHTML = `<span class="icon ${ic}">${ch}</span>`;
+    span.appendChild(document.createTextNode(node.name));
+
     if (node.step) {
         const badge = document.createElement('span');
         badge.className = 'step-badge';
         badge.textContent = 'S' + node.step;
         span.appendChild(badge);
     }
-    span.addEventListener('click', () => highlightNode(node.name));
-    li.appendChild(span);
 
+    // 存储节点名到 span 的映射（点用点名，帧用帧名）
+    nodeSpans[node.name] = span;
+
+    span.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectNode(node.name);
+    });
+
+    li.appendChild(span);
     if (node.children) {
-        for (const child of node.children) {
-            buildTree(child, li, false);
-        }
+        for (const child of node.children) buildTree(child, li);
     }
     ul.appendChild(li);
     container.appendChild(ul);
 }
 
-function highlightNode(name) {
-    document.querySelectorAll('.tree .node').forEach(n => n.classList.remove('active'));
-    event.currentTarget.classList.add('active');
-    // 高亮对应的 3D 对象
-    highlight3D(name);
+// ============================================================
+// 选中 / 高亮
+// ============================================================
+function selectNode(name) {
+    // 取消旧选中
+    if (selectedName) {
+        unhighlightNode(selectedName);
+    }
+    // 如果再次点击同一个，取消选中
+    if (selectedName === name) {
+        selectedName = null;
+        clearTreeSelection();
+        return;
+    }
+
+    selectedName = name;
+    // 树高亮
+    clearTreeSelection();
+    const span = nodeSpans[name];
+    if (span) span.classList.add('selected');
+
+    // 3D 高亮
+    highlightNode(name);
 }
 
-function highlight3D(name) {
-    // 暂时用闪烁效果提示选中
-    const mesh = pointMeshes[name];
-    if (mesh) {
-        const origColor = mesh.material.color.getHex();
-        mesh.material.color.setHex(0xffffff);
-        setTimeout(() => mesh.material.color.setHex(origColor), 300);
+function clearTreeSelection() {
+    document.querySelectorAll('.tree .node').forEach(n => n.classList.remove('selected'));
+}
+
+function highlightNode(name) {
+    // 判断是帧还是点
+    const isFrame = FRAME_NAMES.includes(name);
+
+    if (isFrame) {
+        // 高亮帧的坐标轴
+        const fa = frameAxes[name];
+        if (fa) {
+            fa.arrows.forEach(a => { a.line.material.linewidth = 4; });
+        }
+        // 高亮帧标签
+        const fl = frameLabelDivs[name];
+        if (fl) fl.style.fontWeight = 'bold';
+        // 高亮帧的子点
+        const pts = frameChildPoints[name] || [];
+        pts.forEach(p => highlightMesh(p));
+    } else {
+        // 高亮点本身
+        highlightMesh(name);
+        // 高亮相关的线和圆
+        const els = pointToElements[name] || [];
+        els.forEach(elId => highlightLineOrCircle(elId));
     }
 }
 
+function unhighlightNode(name) {
+    const isFrame = FRAME_NAMES.includes(name);
+    if (isFrame) {
+        const fa = frameAxes[name];
+        if (fa) fa.arrows.forEach(a => { a.line.material.linewidth = 2; });
+        const fl = frameLabelDivs[name];
+        if (fl) fl.style.fontWeight = 'normal';
+        const pts = frameChildPoints[name] || [];
+        pts.forEach(p => unhighlightMesh(p));
+    } else {
+        unhighlightMesh(name);
+        const els = pointToElements[name] || [];
+        els.forEach(elId => unhighlightLineOrCircle(elId));
+    }
+}
+
+function highlightMesh(pointName) {
+    const mesh = pointMeshes[pointName];
+    if (!mesh) return;
+    mesh.scale.set(1.6, 1.6, 1.6);
+}
+
+function unhighlightMesh(pointName) {
+    const mesh = pointMeshes[pointName];
+    if (!mesh) return;
+    mesh.scale.set(1, 1, 1);
+}
+
+function highlightLineOrCircle(elId) {
+    const obj = lineObjects[elId] || circleObjects[elId];
+    if (!obj) return;
+    obj.material.linewidth = 4;
+    obj.material.opacity = 1.0;
+    obj.material.transparent = false;
+}
+
+function unhighlightLineOrCircle(elId) {
+    const obj = lineObjects[elId] || circleObjects[elId];
+    if (!obj) return;
+    obj.material.linewidth = 2;
+    obj.material.opacity = 1.0;
+    obj.material.transparent = false;
+}
+
 // ============================================================
-// 滑块构建
+// 滑块
 // ============================================================
 function buildSliders() {
-    const activeContainer = document.getElementById('active-sliders');
-    for (const [key, spec] of Object.entries(mechanismDef.active_params)) {
-        activeContainer.appendChild(createSlider(key, spec, 'active'));
-    }
-
-    const fixedContainer = document.getElementById('fixed-body');
-    for (const [key, spec] of Object.entries(mechanismDef.fixed_params)) {
-        fixedContainer.appendChild(createSlider(key, spec, 'fixed'));
-    }
+    const ac = document.getElementById('active-sliders');
+    for (const [key, spec] of Object.entries(mechanismDef.active_params))
+        ac.appendChild(makeSlider(key, spec, 'active'));
+    const fc = document.getElementById('fixed-body');
+    for (const [key, spec] of Object.entries(mechanismDef.fixed_params))
+        fc.appendChild(makeSlider(key, spec, 'fixed'));
 }
 
-function createSlider(key, spec, group) {
+function makeSlider(key, spec, group) {
     const row = document.createElement('div');
     row.className = 'param-row';
-
-    const label = document.createElement('label');
-    label.textContent = spec.label;
-
-    const input = document.createElement('input');
-    input.type = 'range';
-    input.min = spec.min;
-    input.max = spec.max;
-    input.step = 1;
-    input.value = spec.value;
-    input.id = `slider-${group}-${key}`;
-
+    const lbl = document.createElement('label');
+    lbl.textContent = spec.label;
+    const inp = document.createElement('input');
+    inp.type = 'range'; inp.min = spec.min; inp.max = spec.max;
+    inp.step = 1; inp.value = spec.value;
     const val = document.createElement('span');
     val.className = 'val';
     val.textContent = spec.value + (spec.unit === 'deg' ? '°' : '');
-    val.id = `val-${group}-${key}`;
-
-    input.addEventListener('input', () => {
-        const v = parseFloat(input.value);
+    inp.addEventListener('input', () => {
+        const v = parseFloat(inp.value);
         val.textContent = v + (spec.unit === 'deg' ? '°' : '');
         if (group === 'active') currentActive[key] = v;
         else currentFixed[key] = v;
         debouncedSolve();
     });
-
-    row.appendChild(label);
-    row.appendChild(input);
-    row.appendChild(val);
+    row.append(lbl, inp, val);
     return row;
 }
 
@@ -268,12 +376,11 @@ function toggleSection(id) {
 // Three.js 初始化
 // ============================================================
 function initThreeJS() {
-    const container = document.getElementById('viewport');
-    const w = container.clientWidth;
-    const h = container.clientHeight;
+    const box = document.getElementById('viewport');
+    const w = box.clientWidth, h = box.clientHeight;
 
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x1a1a2e);
+    scene.background = new THREE.Color(0xffffff);
 
     camera = new THREE.PerspectiveCamera(50, w / h, 0.1, 5000);
     camera.position.set(50, -60, 60);
@@ -282,53 +389,93 @@ function initThreeJS() {
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(w, h);
     renderer.setPixelRatio(window.devicePixelRatio);
-    container.appendChild(renderer.domElement);
+    box.appendChild(renderer.domElement);
 
-    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls = new OrbitControls(camera, renderer.domElement);
     controls.target.set(10, 0, 20);
     controls.update();
 
-    // 世界坐标轴
-    addAxis(new THREE.Vector3(0,0,0), new THREE.Vector3(AXIS_LEN,0,0), 0xff0000);
-    addAxis(new THREE.Vector3(0,0,0), new THREE.Vector3(0,AXIS_LEN,0), 0x00ff00);
-    addAxis(new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,AXIS_LEN), 0x4444ff);
+    raycaster = new THREE.Raycaster();
+    raycaster.params.Points.threshold = 3;
+    mouse = new THREE.Vector2();
 
-    // 网格辅助
-    const grid = new THREE.GridHelper(100, 20, 0x222244, 0x1a1a3a);
+    // 世界坐标轴（淡色，不抢眼）
+    const axLen = 25;
+    addWorldAxis([0,0,0], [axLen,0,0], 0xee4444, 'X');
+    addWorldAxis([0,0,0], [0,axLen,0], 0x44bb44, 'Y');
+    addWorldAxis([0,0,0], [0,0,axLen], 0x4488ee, 'Z');
+
+    // 网格
+    const grid = new THREE.GridHelper(100, 20, 0xe0e0e0, 0xefefef);
     grid.rotation.x = Math.PI / 2;
-    grid.position.z = 0;
     scene.add(grid);
 
-    // 创建所有可视化元素
-    for (const el of mechanismDef.visualization) {
-        createVisElement(el);
-    }
+    // 机构可视化元素
+    for (const el of mechanismDef.visualization) createEl(el);
 
-    // 响应窗口大小
+    // 坐标系三色轴（每个帧）
+    for (const fname of FRAME_NAMES) createFrameAxes(fname);
+
+    // 3D 点击监听
+    renderer.domElement.addEventListener('click', onCanvasClick);
+
     window.addEventListener('resize', onResize);
-
     animate();
 }
 
-function addAxis(from, to, color) {
+function addWorldAxis(a, b, color, labelText) {
+    const pts = [new THREE.Vector3(...a), new THREE.Vector3(...b)];
+    const geom = new THREE.BufferGeometry().setFromPoints(pts);
     const mat = new THREE.LineBasicMaterial({ color, linewidth: 2 });
-    const geom = new THREE.BufferGeometry().setFromPoints([from, to]);
     scene.add(new THREE.Line(geom, mat));
+    // 轴标签
+    const div = document.createElement('div');
+    div.className = 'frame-label';
+    div.textContent = labelText;
+    div.style.color = '#' + color.toString(16).padStart(6, '0');
+    document.getElementById('viewport').appendChild(div);
+    labelDivs['_world_' + labelText] = div;
+    // 存一下端点用于标签定位
+    pointMeshes['_world_' + labelText] = { position: new THREE.Vector3(...b) };
 }
 
-function createVisElement(el) {
+function createFrameAxes(name) {
+    const group = new THREE.Group();
+    const arrowLen = AXIS_LENGTH;
+    const colors = [0xee4444, 0x44bb44, 0x4488ee]; // R G B -> X Y Z
+    const dirs = [
+        new THREE.Vector3(1, 0, 0),
+        new THREE.Vector3(0, 1, 0),
+        new THREE.Vector3(0, 0, 1),
+    ];
+    const arrows = dirs.map((dir, i) => {
+        const arrow = new THREE.ArrowHelper(dir, new THREE.Vector3(0,0,0), arrowLen, colors[i], 2, 1.2);
+        arrow.line.material.linewidth = 2;
+        group.add(arrow);
+        return arrow;
+    });
+    scene.add(group);
+
+    // 帧标签
+    const div = document.createElement('div');
+    div.className = 'frame-label';
+    div.textContent = name;
+    document.getElementById('viewport').appendChild(div);
+    frameLabelDivs[name] = div;
+
+    frameAxes[name] = { group, arrows };
+}
+
+function createEl(el) {
     if (el.type === 'sphere') {
-        const geom = new THREE.SphereGeometry(el.radius, SPHERE_SEGMENTS, SPHERE_SEGMENTS);
+        const geom = new THREE.SphereGeometry(el.radius, SPHERE_SEG, SPHERE_SEG);
         const mat = new THREE.MeshBasicMaterial({ color: el.color });
         const mesh = new THREE.Mesh(geom, mat);
-        mesh.position.set(0, 0, 0);
         scene.add(mesh);
         pointMeshes[el.point] = mesh;
-
-        // 标签
         if (el.label) {
             const div = document.createElement('div');
-            div.style.cssText = 'position:absolute;color:#aabbcc;font-size:11px;pointer-events:none;white-space:nowrap;font-family:sans-serif;';
+            div.className = 'label';
             div.textContent = el.label;
             document.getElementById('viewport').appendChild(div);
             labelDivs[el.point] = div;
@@ -350,8 +497,8 @@ function createVisElement(el) {
         lineObjects[el.id] = line;
     }
     else if (el.type === 'circle') {
-        const segments = 64;
-        const positions = new Float32Array((segments + 1) * 3);
+        const seg = 64;
+        const positions = new Float32Array((seg + 1) * 3);
         const geom = new THREE.BufferGeometry();
         geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         const mat = new THREE.LineBasicMaterial({ color: el.color });
@@ -362,92 +509,138 @@ function createVisElement(el) {
 }
 
 // ============================================================
+// 3D 点击 → 射线检测
+// ============================================================
+function onCanvasClick(event) {
+    const rect = renderer.domElement.getBoundingClientRect();
+    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+    const meshes = Object.entries(pointMeshes)
+        .filter(([name]) => !name.startsWith('_'))
+        .map(([, m]) => m);
+    const hits = raycaster.intersectObjects(meshes);
+    if (hits.length === 0) return;
+
+    // 找到被点击的点名称
+    const hitMesh = hits[0].object;
+    const hitName = Object.entries(pointMeshes).find(([, m]) => m === hitMesh)?.[0];
+    if (hitName) selectNode(hitName);
+}
+
+// ============================================================
 // 场景更新
 // ============================================================
 function updateScene(data) {
+    lastSolveData = data;
     const pts = data.points;
 
-    // 更新球体位置
+    // 球体
     for (const [name, mesh] of Object.entries(pointMeshes)) {
-        if (pts[name]) {
-            mesh.position.set(pts[name][0], pts[name][1], pts[name][2]);
-        }
+        if (pts[name]) mesh.position.set(...pts[name]);
     }
 
-    // 更新线条
+    // 线条 & 圆
     for (const el of mechanismDef.visualization) {
         if (el.type === 'line') {
             const line = lineObjects[el.id];
-            if (line && pts[el.from] && pts[el.to]) {
-                const pos = line.geometry.attributes.position.array;
-                pos[0] = pts[el.from][0]; pos[1] = pts[el.from][1]; pos[2] = pts[el.from][2];
-                pos[3] = pts[el.to][0];   pos[4] = pts[el.to][1];   pos[5] = pts[el.to][2];
-                line.geometry.attributes.position.needsUpdate = true;
-                if (el.dash) line.computeLineDistances();
-            }
+            if (!line || !pts[el.from] || !pts[el.to]) continue;
+            const p = line.geometry.attributes.position.array;
+            p[0]=pts[el.from][0]; p[1]=pts[el.from][1]; p[2]=pts[el.from][2];
+            p[3]=pts[el.to][0];   p[4]=pts[el.to][1];   p[5]=pts[el.to][2];
+            line.geometry.attributes.position.needsUpdate = true;
+            if (el.dash) line.computeLineDistances();
         }
         else if (el.type === 'circle') {
             const line = circleObjects[el.id];
-            const center = pts[el.center];
-            const radius = currentFixed[el.radius_param] || 16;
-            if (line && center) {
-                const pos = line.geometry.attributes.position.array;
-                const segments = (pos.length / 3) - 1;
-                for (let i = 0; i <= segments; i++) {
-                    const angle = (i / segments) * Math.PI * 2;
-                    const idx = i * 3;
-                    pos[idx]     = center[0];
-                    pos[idx + 1] = center[1] + radius * Math.cos(angle);
-                    pos[idx + 2] = center[2] + radius * Math.sin(angle);
-                }
-                line.geometry.attributes.position.needsUpdate = true;
+            const c = pts[el.center];
+            const r = currentFixed[el.radius_param] || 16;
+            if (!line || !c) continue;
+            const p = line.geometry.attributes.position.array;
+            const n = (p.length / 3) - 1;
+            for (let i = 0; i <= n; i++) {
+                const a = (i / n) * Math.PI * 2;
+                const j = i * 3;
+                p[j]=c[0]; p[j+1]=c[1]+r*Math.cos(a); p[j+2]=c[2]+r*Math.sin(a);
             }
+            line.geometry.attributes.position.needsUpdate = true;
         }
     }
 
-    // 更新标签位置
+    // 坐标系轴
+    const frames = data.frames || {};
+    for (const fname of FRAME_NAMES) {
+        const fa = frameAxes[fname];
+        const fd = frames[fname];
+        if (!fa || !fd) continue;
+        const origin = new THREE.Vector3(...fd.origin);
+        fa.group.position.copy(origin);
+        const axes = fd.axes;
+        // 更新每个箭头方向
+        const dirs = [
+            new THREE.Vector3(...axes[0]).normalize(),
+            new THREE.Vector3(...axes[1]).normalize(),
+            new THREE.Vector3(...axes[2]).normalize(),
+        ];
+        dirs.forEach((dir, i) => {
+            const arrow = fa.arrows[i];
+            arrow.setDirection(dir);
+            arrow.setLength(AXIS_LENGTH, 2, 1.2);
+        });
+    }
+
+    // 标签
+    updateLabels();
+
+    // 结果面板
+    document.getElementById('res-alpha').textContent = data.alpha_deg.toFixed(2) + '°';
+    document.getElementById('res-theta').textContent = data.theta_deg.toFixed(2) + '°';
+    document.getElementById('res-link-r').textContent = data.link_lengths.right.toFixed(2) + ' mm';
+    document.getElementById('res-link-l').textContent = data.link_lengths.left.toFixed(2) + ' mm';
+    const rs = document.getElementById('res-status');
+    rs.textContent = data.success ? 'OK' : 'No solution';
+    rs.className = data.success ? 'value' : 'value fail';
+
+    // 如果有选中状态，重新应用高亮
+    if (selectedName) {
+        highlightNode(selectedName);
+    }
+}
+
+function updateLabels() {
+    const rect = renderer.domElement.getBoundingClientRect();
     for (const [name, div] of Object.entries(labelDivs)) {
-        if (pts[name]) {
-            const v = new THREE.Vector3(pts[name][0], pts[name][1], pts[name][2]);
-            v.project(camera);
-            const rect = renderer.domElement.getBoundingClientRect();
-            const x = (v.x * 0.5 + 0.5) * rect.width;
-            const y = (-v.y * 0.5 + 0.5) * rect.height;
-            div.style.left = (x + 8) + 'px';
-            div.style.top = (y - 6) + 'px';
+        const mesh = pointMeshes[name];
+        if (!mesh) continue;
+        const pos = mesh.position;
+        if (pos.clone) {
+            const v = pos.clone().project(camera);
+            div.style.left = ((v.x * 0.5 + 0.5) * rect.width + 8) + 'px';
+            div.style.top = ((-v.y * 0.5 + 0.5) * rect.height - 6) + 'px';
             div.style.display = v.z < 1 ? '' : 'none';
         }
     }
-
-    // 更新结果面板
-    const resAlpha = document.getElementById('res-alpha');
-    const resTheta = document.getElementById('res-theta');
-    const resLinkR = document.getElementById('res-link-r');
-    const resLinkL = document.getElementById('res-link-l');
-    const resStatus = document.getElementById('res-status');
-
-    resAlpha.textContent = data.alpha_deg.toFixed(2) + '°';
-    resTheta.textContent = data.theta_deg.toFixed(2) + '°';
-    resLinkR.textContent = data.link_lengths.right.toFixed(2) + ' mm';
-    resLinkL.textContent = data.link_lengths.left.toFixed(2) + ' mm';
-
-    if (data.success) {
-        resStatus.textContent = 'OK';
-        resStatus.className = 'value';
-    } else {
-        resStatus.textContent = 'No solution';
-        resStatus.className = 'value fail';
+    // 坐标系标签
+    for (const fname of FRAME_NAMES) {
+        const fa = frameAxes[fname];
+        const div = frameLabelDivs[fname];
+        if (!fa || !div) continue;
+        const v = fa.group.position.clone().project(camera);
+        div.style.left = ((v.x * 0.5 + 0.5) * rect.width + 12) + 'px';
+        div.style.top = ((-v.y * 0.5 + 0.5) * rect.height + 2) + 'px';
+        div.style.display = v.z < 1 ? '' : 'none';
     }
 }
 
 // ============================================================
 // 求解
 // ============================================================
-let solveTimeout = null;
+let solveTimer = null;
 function debouncedSolve() {
-    clearTimeout(solveTimeout);
+    clearTimeout(solveTimer);
     setStatus('Solving...', 'solving');
-    solveTimeout = setTimeout(doSolve, 50);
+    solveTimer = setTimeout(doSolve, 50);
 }
 
 async function doSolve() {
@@ -455,10 +648,7 @@ async function doSolve() {
         const resp = await fetch('/api/solve', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                fixed_params: currentFixed,
-                active_params: currentActive,
-            }),
+            body: JSON.stringify({ fixed_params: currentFixed, active_params: currentActive }),
         });
         const data = await resp.json();
         updateScene(data);
@@ -476,40 +666,22 @@ function setStatus(text, cls) {
 }
 
 // ============================================================
-// 渲染循环 & 窗口缩放
+// 渲染循环
 // ============================================================
 function animate() {
     requestAnimationFrame(animate);
     controls.update();
-    // 每帧更新标签位置
     updateLabels();
     renderer.render(scene, camera);
 }
 
-function updateLabels() {
-    for (const [name, div] of Object.entries(labelDivs)) {
-        if (!pointMeshes[name]) continue;
-        const v = pointMeshes[name].position.clone();
-        v.project(camera);
-        const rect = renderer.domElement.getBoundingClientRect();
-        const x = (v.x * 0.5 + 0.5) * rect.width;
-        const y = (-v.y * 0.5 + 0.5) * rect.height;
-        div.style.left = (x + 8) + 'px';
-        div.style.top = (y - 6) + 'px';
-        div.style.display = v.z < 1 ? '' : 'none';
-    }
-}
-
 function onResize() {
-    const container = document.getElementById('viewport');
-    const w = container.clientWidth;
-    const h = container.clientHeight;
-    camera.aspect = w / h;
+    const box = document.getElementById('viewport');
+    camera.aspect = box.clientWidth / box.clientHeight;
     camera.updateProjectionMatrix();
-    renderer.setSize(w, h);
+    renderer.setSize(box.clientWidth, box.clientHeight);
 }
 
-// 启动
 init();
 </script>
 </body>
