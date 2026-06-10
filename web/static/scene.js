@@ -60,9 +60,9 @@ export function initScene(containerEl, definition, onNodeClick) {
     mouse = new THREE.Vector2();
 
     const axLen = 25;
-    addWorldAxis([0,0,0], [axLen,0,0], 0xee4444, 'X');
-    addWorldAxis([0,0,0], [0,axLen,0], 0x44bb44, 'Y');
-    addWorldAxis([0,0,0], [0,0,axLen], 0x4488ee, 'Z');
+    addWorldAxis([0,0,0], [axLen,0,0], 0xcc4444, 'X');
+    addWorldAxis([0,0,0], [0,axLen,0], 0x44aa44, 'Y');
+    addWorldAxis([0,0,0], [0,0,axLen], 0x4488cc, 'Z');
 
     const grid = new THREE.GridHelper(100, 20, 0xe0e0e0, 0xefefef);
     grid.rotation.x = Math.PI / 2;

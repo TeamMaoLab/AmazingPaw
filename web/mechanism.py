@@ -108,32 +108,32 @@ VIS_ELEMENTS = [
     {"id": "servo_l_circle",    "type": "circle", "color": "#cccccc", "center": "servo_l", "radius_param": "R", "style": "ref"},
 
     # ── spheres (all same tone) ──
-    {"id": "base_sphere",       "type": "sphere", "color": "#3a3a3a", "label": "base",      "radius": 1.5, "point": "base"},
-    {"id": "pivot_sphere",      "type": "sphere", "color": "#3a3a3a", "label": "pivot",     "radius": 1.5, "point": "pivot"},
-    {"id": "arm_sphere",        "type": "sphere", "color": "#3a3a3a", "label": "arm",       "radius": 1.2, "point": "arm"},
-    {"id": "proximal_sphere",   "type": "sphere", "color": "#3a3a3a", "label": "proximal",  "radius": 1.5, "point": "proximal"},
-    {"id": "upright_sphere",    "type": "sphere", "color": "#3a3a3a", "label": "upright",   "radius": 1.5, "point": "upright"},
-    {"id": "tip_sphere",        "type": "sphere", "color": "#3a3a3a", "label": "tip",       "radius": 1.2, "point": "tip"},
-    {"id": "bar_upper_sphere",  "type": "sphere", "color": "#3a3a3a", "label": "bar_upper", "radius": 1.5, "point": "bar_upper"},
-    {"id": "bar_lower_sphere",  "type": "sphere", "color": "#3a3a3a", "label": "bar_lower", "radius": 1.5, "point": "bar_lower"},
-    {"id": "servo_r_sphere",    "type": "sphere", "color": "#3a3a3a", "label": "servo_r",   "radius": 1.0, "point": "servo_r"},
-    {"id": "servo_l_sphere",    "type": "sphere", "color": "#3a3a3a", "label": "servo_l",   "radius": 1.0, "point": "servo_l"},
-    {"id": "link_r_sphere",     "type": "sphere", "color": "#3a3a3a", "label": "link_r",    "radius": 1.5, "point": "link_r"},
-    {"id": "link_l_sphere",     "type": "sphere", "color": "#3a3a3a", "label": "link_l",    "radius": 1.5, "point": "link_l"},
+    {"id": "base_sphere",       "type": "sphere", "color": "#e8a020", "label": "base",      "radius": 1.5, "point": "base"},
+    {"id": "pivot_sphere",      "type": "sphere", "color": "#e8a020", "label": "pivot",     "radius": 1.5, "point": "pivot"},
+    {"id": "arm_sphere",        "type": "sphere", "color": "#e8a020", "label": "arm",       "radius": 1.2, "point": "arm"},
+    {"id": "proximal_sphere",   "type": "sphere", "color": "#e8a020", "label": "proximal",  "radius": 1.5, "point": "proximal"},
+    {"id": "upright_sphere",    "type": "sphere", "color": "#e8a020", "label": "upright",   "radius": 1.5, "point": "upright"},
+    {"id": "tip_sphere",        "type": "sphere", "color": "#e8a020", "label": "tip",       "radius": 1.2, "point": "tip"},
+    {"id": "bar_upper_sphere",  "type": "sphere", "color": "#e8a020", "label": "bar_upper", "radius": 1.5, "point": "bar_upper"},
+    {"id": "bar_lower_sphere",  "type": "sphere", "color": "#e8a020", "label": "bar_lower", "radius": 1.5, "point": "bar_lower"},
+    {"id": "servo_r_sphere",    "type": "sphere", "color": "#e8a020", "label": "servo_r",   "radius": 1.0, "point": "servo_r"},
+    {"id": "servo_l_sphere",    "type": "sphere", "color": "#e8a020", "label": "servo_l",   "radius": 1.0, "point": "servo_l"},
+    {"id": "link_r_sphere",     "type": "sphere", "color": "#e8a020", "label": "link_r",    "radius": 1.5, "point": "link_r"},
+    {"id": "link_l_sphere",     "type": "sphere", "color": "#e8a020", "label": "link_l",    "radius": 1.5, "point": "link_l"},
 
-    # ── active (solid, dark) ──
-    {"id": "pivot_arm_line",    "type": "line",   "color": "#2a2a2a", "from": "pivot", "to": "arm"},
-    {"id": "pivot_proximal_line","type": "line",  "color": "#2a2a2a", "from": "pivot", "to": "proximal"},
-    {"id": "pivot_upright_line","type": "line",   "color": "#2a2a2a", "from": "pivot", "to": "upright"},
-    {"id": "upright_tip_line",  "type": "line",   "color": "#2a2a2a", "from": "upright", "to": "tip"},
-    {"id": "bar_line",          "type": "line",   "color": "#2a2a2a", "from": "bar_upper", "to": "bar_lower"},
+    # ── active (solid, amber) ──
+    {"id": "pivot_arm_line",    "type": "line",   "color": "#c88800", "from": "pivot", "to": "arm"},
+    {"id": "pivot_proximal_line","type": "line",  "color": "#c88800", "from": "pivot", "to": "proximal"},
+    {"id": "pivot_upright_line","type": "line",   "color": "#c88800", "from": "pivot", "to": "upright"},
+    {"id": "upright_tip_line",  "type": "line",   "color": "#c88800", "from": "upright", "to": "tip"},
+    {"id": "bar_line",          "type": "line",   "color": "#c88800", "from": "bar_upper", "to": "bar_lower"},
 
-    # ── passive (short dash, medium grey) ──
-    {"id": "proximal_upright_line","type": "line","color": "#888888", "style": "passive",
+    # ── passive (short dash, lighter amber) ──
+    {"id": "proximal_upright_line","type": "line","color": "#d4b870", "style": "passive",
      "from": "proximal", "to": "upright"},
-    {"id": "link_right_line",   "type": "line",   "color": "#888888", "style": "passive",
+    {"id": "link_right_line",   "type": "line",   "color": "#d4b870", "style": "passive",
      "from": "bar_upper", "to": "link_r"},
-    {"id": "link_left_line",    "type": "line",   "color": "#888888", "style": "passive",
+    {"id": "link_left_line",    "type": "line",   "color": "#d4b870", "style": "passive",
      "from": "bar_lower", "to": "link_l"},
 ]
 
