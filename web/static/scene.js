@@ -7,7 +7,7 @@ import { OrbitControls } from '/static/lib/OrbitControls.js';
 
 const SPHERE_SEG = 16;
 const AXIS_LENGTH = 8;
-const DEFAULT_CAM_POS = [100, 110, 120];
+const DEFAULT_CAM_POS = [130, 140, 150];
 const DEFAULT_CAM_TARGET = [10, 0, 66];
 const ORTHO_SIZE = 160;
 const VIEW_DIST = 160;

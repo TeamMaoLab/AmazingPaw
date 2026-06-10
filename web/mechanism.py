@@ -131,6 +131,10 @@ VIS_ELEMENTS = [
     # ── passive (short dash, lighter amber) ──
     {"id": "proximal_upright_line","type": "line","color": "#d4b870", "style": "passive",
      "from": "proximal", "to": "upright"},
+    {"id": "proximal_tip_line",  "type": "line",  "color": "#d4b870", "style": "passive",
+     "from": "proximal", "to": "tip"},
+    {"id": "arm_proximal_line",  "type": "line",  "color": "#d4b870", "style": "passive",
+     "from": "arm", "to": "proximal"},
     {"id": "link_right_line",   "type": "line",   "color": "#d4b870", "style": "passive",
      "from": "bar_upper", "to": "link_r"},
     {"id": "link_left_line",    "type": "line",   "color": "#d4b870", "style": "passive",
