@@ -15,7 +15,7 @@ const frameChildPoints = {
     'world': [],
     'base': ['base'],
     'pivot': ['pivot'],
-    'platform': ['arm', 'bar_upper', 'bar_lower'],
+    'rocker': ['arm', 'bar_upper', 'bar_lower'],
     'servo_r': ['servo_r', 'link_r'],
     'servo_l': ['servo_l', 'link_l'],
 };
@@ -121,10 +121,11 @@ async function init() {
     UI.buildTree(mechDef.growth_tree, document.getElementById('tree-container'), selectNode);
     Scene.initScene(document.getElementById('viewport'), mechDef, selectNode);
 
-    document.getElementById('btn-reset-cam').addEventListener('click', Scene.resetCamera);
+    document.getElementById('btn-reset-cam')?.addEventListener('click', Scene.resetCamera);
     document.querySelectorAll('.view-btns button').forEach(btn => {
         btn.addEventListener('click', () => {
             const v = btn.dataset.view;
+            if (v === 'home') { Scene.resetCamera(); return; }
             const axis = v[1].toLowerCase();
             const sign = v[0] === '+' ? 1 : -1;
             Scene.setView(axis, sign);

@@ -6,7 +6,7 @@ import { OrbitControls } from '/static/lib/OrbitControls.js';
 
 const SPHERE_SEG = 16;
 const AXIS_LENGTH = 8;
-const DEFAULT_CAM_POS = [50, -60, 60];
+const DEFAULT_CAM_POS = [50, 60, 60];
 const DEFAULT_CAM_TARGET = [10, 0, 20];
 
 let scene, camera, renderer, controls, raycaster, mouse;

@@ -52,7 +52,7 @@ export function localCompute(params) {
             world: { origin: [0,0,0], axes: I3 },
             base: { origin: base_pos, axes: I3 },
             pivot: { origin: pivot_pos, axes: I3 },
-            platform: { origin: pivot_pos, axes: axesMat(RxT) },
+            rocker: { origin: pivot_pos, axes: axesMat(RxT) },
             servo_r: { origin: servo_r_pos, axes: I3 },
             servo_l: { origin: servo_l_pos, axes: I3 },
         },

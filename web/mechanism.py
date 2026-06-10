@@ -26,7 +26,7 @@ GROWTH_PARAMS = {
               "step": 4, "desc": "pivot → arm 距离"},
     "L_B":   {"value": 14.0,  "min": 1,   "max": 30,  "unit": "mm",  "label": "bar span",
               "step": 5, "desc": "bar_upper ↔ bar_lower 距离"},
-    "theta": {"value": 0.0,   "min": -90, "max": 90,  "unit": "deg", "label": "platform tilt",
+    "theta": {"value": 0.0,   "min": -90, "max": 90,  "unit": "deg", "label": "rocker tilt",
               "step": 3, "desc": "绕 X 轴旋转"},
     "x_e":   {"value": 11.0,  "min": 0,   "max": 30,  "unit": "mm",  "label": "servo X",
               "step": 7, "desc": "舵机圆心 X"},
@@ -52,7 +52,7 @@ GROWTH_TREE = {
               "relation": "translate +X by L_cp",
               "params": ["L_cp"],
               "children": [
-                  {"name": "platform", "type": "frame", "step": 3,
+                  {"name": "rocker", "type": "frame", "step": 3,
                    "relation": "rotate around X by theta",
                    "params": ["theta"],
                    "children": [
@@ -105,7 +105,7 @@ VIS_ELEMENTS = [
     {"id": "link_left_line",    "type": "line",   "color": "#3366ee", "from": "bar_lower", "to": "link_l", "width": 2},
 ]
 
-FRAME_NAMES = ["base", "pivot", "platform", "servo_r", "servo_l"]
+FRAME_NAMES = ["base", "pivot", "rocker", "servo_r", "servo_l"]
 
 
 # ============================================================
@@ -183,13 +183,13 @@ def compute(params: dict[str, float]) -> dict:
     }
 
     I3 = np.eye(3).tolist()
-    axes_platform = Rmat.T.tolist()
+    axes_rocker = Rmat.T.tolist()
 
     frames = {
         "world":    {"origin": [0, 0, 0],             "axes": I3},
         "base":     {"origin": base_pos.tolist(),      "axes": I3},
         "pivot":    {"origin": pivot_pos.tolist(),     "axes": I3},
-        "platform": {"origin": pivot_pos.tolist(),     "axes": axes_platform},
+        "rocker":   {"origin": pivot_pos.tolist(),     "axes": axes_rocker},
         "servo_r":  {"origin": servo_r_pos.tolist(),   "axes": I3},
         "servo_l":  {"origin": servo_l_pos.tolist(),   "axes": I3},
     }
