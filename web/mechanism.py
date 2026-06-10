@@ -99,31 +99,42 @@ GROWTH_TREE = {
 }
 
 VIS_ELEMENTS = [
+    # ── reference (dot line, muted) ──
+    {"id": "base_pivot_line",   "type": "line",   "color": "#bbbbbb", "style": "ref",
+     "from": "base", "to": "pivot"},
+    {"id": "rot_axis",          "type": "line",   "color": "#bbbbbb", "style": "ref",
+     "from": "rot_axis_start", "to": "rot_axis_end"},
+    {"id": "servo_r_circle",    "type": "circle", "color": "#bbbbbb", "center": "servo_r", "radius_param": "R", "style": "ref"},
+    {"id": "servo_l_circle",    "type": "circle", "color": "#bbbbbb", "center": "servo_l", "radius_param": "R", "style": "ref"},
+
+    # ── spheres ──
     {"id": "base_sphere",       "type": "sphere", "color": "#00cc44", "label": "base",      "radius": 1.5, "point": "base"},
     {"id": "pivot_sphere",      "type": "sphere", "color": "#0088ff", "label": "pivot",     "radius": 1.5, "point": "pivot"},
-    {"id": "base_pivot_line",   "type": "line",   "color": "#888888", "dash": True, "from": "base", "to": "pivot"},
-    {"id": "rot_axis",          "type": "line",   "color": "#00cccc", "dash": True,
-     "from": "rot_axis_start", "to": "rot_axis_end"},
     {"id": "arm_sphere",        "type": "sphere", "color": "#ddaa00", "label": "arm",       "radius": 1.2, "point": "arm"},
     {"id": "proximal_sphere",   "type": "sphere", "color": "#3388cc", "label": "proximal",  "radius": 1.5, "point": "proximal"},
-    {"id": "pivot_proximal_line","type": "line",   "color": "#2266aa", "from": "pivot", "to": "proximal"},
     {"id": "upright_sphere",    "type": "sphere", "color": "#44aa44", "label": "upright",   "radius": 1.5, "point": "upright"},
-    {"id": "pivot_upright_line","type": "line",    "color": "#338833", "from": "pivot", "to": "upright"},
-    {"id": "proximal_upright_line","type": "line", "color": "#558899", "dash": True, "from": "proximal", "to": "upright"},
-    {"id": "tip_sphere",        "type": "sphere", "color": "#22cc66", "label": "tip",        "radius": 1.2, "point": "tip"},
-    {"id": "upright_tip_line",  "type": "line",    "color": "#22aa55", "from": "upright", "to": "tip"},
+    {"id": "tip_sphere",        "type": "sphere", "color": "#22cc66", "label": "tip",       "radius": 1.2, "point": "tip"},
     {"id": "bar_upper_sphere",  "type": "sphere", "color": "#ee3333", "label": "bar_upper", "radius": 1.5, "point": "bar_upper"},
     {"id": "bar_lower_sphere",  "type": "sphere", "color": "#ee3333", "label": "bar_lower", "radius": 1.5, "point": "bar_lower"},
-    {"id": "bar_line",          "type": "line",   "color": "#aa00dd", "from": "bar_upper", "to": "bar_lower", "width": 3},
-    {"id": "pivot_arm_line",    "type": "line",   "color": "#ff8800", "from": "pivot", "to": "arm"},
-    {"id": "servo_r_circle",    "type": "circle", "color": "#00aaaa", "center": "servo_r", "radius_param": "R", "dash": True},
-    {"id": "servo_l_circle",    "type": "circle", "color": "#aa00aa", "center": "servo_l", "radius_param": "R", "dash": True},
     {"id": "servo_r_sphere",    "type": "sphere", "color": "#333333", "label": "servo_r",   "radius": 1.0, "point": "servo_r"},
     {"id": "servo_l_sphere",    "type": "sphere", "color": "#333333", "label": "servo_l",   "radius": 1.0, "point": "servo_l"},
     {"id": "link_r_sphere",     "type": "sphere", "color": "#ff8800", "label": "link_r",    "radius": 1.5, "point": "link_r"},
     {"id": "link_l_sphere",     "type": "sphere", "color": "#ff8800", "label": "link_l",    "radius": 1.5, "point": "link_l"},
-    {"id": "link_right_line",   "type": "line",   "color": "#ee3333", "from": "bar_upper", "to": "link_r", "width": 2},
-    {"id": "link_left_line",    "type": "line",   "color": "#3366ee", "from": "bar_lower", "to": "link_l", "width": 2},
+
+    # ── active (solid, saturated) ──
+    {"id": "pivot_arm_line",    "type": "line",   "color": "#ff8800", "from": "pivot", "to": "arm"},
+    {"id": "pivot_proximal_line","type": "line",  "color": "#2266aa", "from": "pivot", "to": "proximal"},
+    {"id": "pivot_upright_line","type": "line",   "color": "#338833", "from": "pivot", "to": "upright"},
+    {"id": "upright_tip_line",  "type": "line",   "color": "#22aa55", "from": "upright", "to": "tip"},
+    {"id": "bar_line",          "type": "line",   "color": "#aa00dd", "from": "bar_upper", "to": "bar_lower"},
+
+    # ── passive (short dash, same color family) ──
+    {"id": "proximal_upright_line","type": "line","color": "#5588aa", "style": "passive",
+     "from": "proximal", "to": "upright"},
+    {"id": "link_right_line",   "type": "line",   "color": "#cc5555", "style": "passive",
+     "from": "bar_upper", "to": "link_r"},
+    {"id": "link_left_line",    "type": "line",   "color": "#5577cc", "style": "passive",
+     "from": "bar_lower", "to": "link_l"},
 ]
 
 FRAME_NAMES = ["base", "pivot", "rocker", "servo_r", "servo_l"]

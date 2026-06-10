@@ -34,14 +34,14 @@ export function initScene(containerEl, definition, onNodeClick) {
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xffffff);
 
-    perspCam = new THREE.PerspectiveCamera(50, w / h, 0.1, 5000);
+    perspCam = new THREE.PerspectiveCamera(50, w / h, 0.01, 5000);
     perspCam.position.set(...DEFAULT_CAM_POS);
     perspCam.up.set(0, 0, 1);
 
     const aspect = w / h;
     orthoCam = new THREE.OrthographicCamera(
         -ORTHO_SIZE * aspect / 2, ORTHO_SIZE * aspect / 2,
-        ORTHO_SIZE / 2, -ORTHO_SIZE / 2, 0.1, 5000
+        ORTHO_SIZE / 2, -ORTHO_SIZE / 2, 0.01, 5000
     );
     orthoCam.up.set(0, 0, 1);
 
@@ -120,7 +120,7 @@ export function updateScene(data) {
             p[0]=pts[el.from][0]; p[1]=pts[el.from][1]; p[2]=pts[el.from][2];
             p[3]=pts[el.to][0];   p[4]=pts[el.to][1];   p[5]=pts[el.to][2];
             line.geometry.attributes.position.needsUpdate = true;
-            if (el.dash) line.computeLineDistances();
+            if (el.style === 'passive' || el.style === 'ref') line.computeLineDistances();
         }
         else if (el.type === 'circle') {
             const line = circleObjects[el.id];
@@ -134,7 +134,7 @@ export function updateScene(data) {
                 p[j]=c[0]; p[j+1]=c[1]+r*Math.cos(a); p[j+2]=c[2]+r*Math.sin(a);
             }
             line.geometry.attributes.position.needsUpdate = true;
-            if (el.dash) line.computeLineDistances();
+            if (el.style === 'passive' || el.style === 'ref') line.computeLineDistances();
         }
     }
     const frames = data.frames || {};
@@ -181,6 +181,14 @@ export function clearHighlight(frameNames) {
 }
 
 // ── internal ──
+
+function makeLineMat(el) {
+    if (el.style === 'passive')
+        return new THREE.LineDashedMaterial({ color: el.color, transparent: true, opacity: 1.0, dashSize: 2, gapSize: 1.5 });
+    if (el.style === 'ref')
+        return new THREE.LineDashedMaterial({ color: el.color, transparent: true, opacity: 1.0, dashSize: 1, gapSize: 2 });
+    return new THREE.LineBasicMaterial({ color: el.color, transparent: true, opacity: 1.0 });
+}
 
 function setObjOpacity(obj, op) {
     if (!obj || !obj.material) return;
@@ -240,11 +248,10 @@ function createEl(el) {
     else if (el.type === 'line') {
         const geom = new THREE.BufferGeometry();
         geom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(6), 3));
-        let mat;
-        if (el.dash) mat = new THREE.LineDashedMaterial({ color: el.color, transparent: true, opacity: 1.0, dashSize: 2, gapSize: 1.5 });
-        else mat = new THREE.LineBasicMaterial({ color: el.color, transparent: true, opacity: 1.0 });
+        const mat = makeLineMat(el);
         const line = new THREE.Line(geom, mat);
-        if (el.dash) line.computeLineDistances();
+        line.frustumCulled = false;
+        if (el.style === 'passive' || el.style === 'ref') line.computeLineDistances();
         scene.add(line);
         lineObjects[el.id] = line;
     }
@@ -252,10 +259,10 @@ function createEl(el) {
         const seg = 64;
         const geom = new THREE.BufferGeometry();
         geom.setAttribute('position', new THREE.BufferAttribute(new Float32Array((seg+1)*3), 3));
-        const mat = el.dash
-            ? new THREE.LineDashedMaterial({ color: el.color, transparent: true, opacity: 1.0, dashSize: 2, gapSize: 1.5 })
-            : new THREE.LineBasicMaterial({ color: el.color, transparent: true, opacity: 1.0 });
+        const mat = makeLineMat(el);
         const line = new THREE.Line(geom, mat);
+        line.frustumCulled = false;
+        if (el.style === 'passive' || el.style === 'ref') line.computeLineDistances();
         scene.add(line);
         circleObjects[el.id] = line;
     }
