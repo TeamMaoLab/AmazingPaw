@@ -21,19 +21,19 @@ GROWTH_PARAMS = {
     "L_cp":  {"value": 10.0,  "min": 1,   "max": 30,  "unit": "mm",  "label": "pivot offset",
               "step": 2, "desc": "沿 +X 平移"},
     "alpha": {"value": 45.0,  "min": 0,   "max": 180, "unit": "deg", "label": "arm angle",
-              "step": 4, "desc": "arm 与局部 +Z 夹角"},
+              "step": 4, "desc": "A 与局部 +Z 夹角"},
     "L_A":   {"value": 7.0,   "min": 1,   "max": 20,  "unit": "mm",  "label": "arm length",
-              "step": 4, "desc": "pivot → arm 距离"},
+              "step": 4, "desc": "P → A 距离"},
     "gamma": {"value": -5.0,  "min": -180, "max": 180, "unit": "deg", "label": "proximal angle",
-              "step": 5, "desc": "proximal 与局部 +Z 夹角"},
-    "L_P":   {"value": 55.0,  "min": 1,   "max": 100, "unit": "mm",  "label": "proximal length",
-              "step": 5, "desc": "pivot → proximal 距离"},
+              "step": 5, "desc": "Q 与局部 +Z 夹角"},
+    "L_Q":   {"value": 55.0,  "min": 1,   "max": 100, "unit": "mm",  "label": "proximal length",
+              "step": 5, "desc": "P → Q 距离"},
     "L_U":   {"value": 55.0,  "min": 1,   "max": 100, "unit": "mm",  "label": "upright length",
-              "step": 6, "desc": "pivot 沿局部 +Z 距离"},
+              "step": 6, "desc": "P 沿局部 +Z 距离"},
     "L_T":   {"value": 40.0,  "min": 1,   "max": 100, "unit": "mm",  "label": "tip length",
-              "step": 7, "desc": "upright → tip 距离"},
+              "step": 7, "desc": "U → T 距离"},
     "L_B":   {"value": 14.0,  "min": 1,   "max": 30,  "unit": "mm",  "label": "bar span",
-              "step": 8, "desc": "bar_upper ↔ bar_lower 距离"},
+              "step": 8, "desc": "R ↔ L 距离"},
     "theta": {"value": 0.0,   "min": -90, "max": 90,  "unit": "deg", "label": "rocker tilt",
               "step": 3, "desc": "绕 X 轴旋转"},
     "x_e":   {"value": 11.0,  "min": 0,   "max": 30,  "unit": "mm",  "label": "servo X",
@@ -44,54 +44,54 @@ GROWTH_PARAMS = {
               "step": 10, "desc": "舵机圆心 Z"},
     "R":     {"value": 16.0,  "min": 1,   "max": 30,  "unit": "mm",  "label": "servo radius",
               "step": 11, "desc": "舵机圆半径"},
-    "beta1": {"value": 60.0,  "min": 0,   "max": 360, "unit": "deg", "label": "link_r angle",
+    "beta1": {"value": 60.0,  "min": 0,   "max": 360, "unit": "deg", "label": "D angle",
               "step": 11, "desc": "右舵机初始角度"},
-    "beta2": {"value": 120.0, "min": 0,   "max": 360, "unit": "deg", "label": "link_l angle",
+    "beta2": {"value": 120.0, "min": 0,   "max": 360, "unit": "deg", "label": "F angle",
               "step": 13, "desc": "左舵机初始角度"},
 }
 
 GROWTH_TREE = {
     "name": "world", "type": "frame", "children": [
-        {"name": "base", "type": "frame", "step": 1,
+        {"name": "B", "type": "frame", "step": 1,
          "relation": "translate +Z by z0",
          "params": ["z0"],
          "children": [
-             {"name": "pivot", "type": "frame", "step": 2,
+             {"name": "P", "type": "frame", "step": 2,
               "relation": "translate +X by L_cp",
               "params": ["L_cp"],
               "children": [
-                  {"name": "rocker", "type": "frame", "step": 3,
+                  {"name": "Rk", "type": "frame", "step": 3,
                    "relation": "rotate around X by theta",
                    "params": ["theta"],
                    "children": [
-                       {"name": "arm", "type": "point", "step": 4,
+                       {"name": "A", "type": "point", "step": 4,
                         "params": ["alpha", "L_A"]},
-                       {"name": "proximal", "type": "point", "step": 5,
-                        "params": ["gamma", "L_P"]},
-                       {"name": "upright", "type": "point", "step": 6,
+                       {"name": "Q", "type": "point", "step": 5,
+                        "params": ["gamma", "L_Q"]},
+                       {"name": "U", "type": "point", "step": 6,
                         "params": ["L_U"]},
-                       {"name": "tip", "type": "point", "step": 7,
+                       {"name": "T", "type": "point", "step": 7,
                         "params": ["L_T"]},
-                       {"name": "bar_upper", "type": "point", "step": 8,
+                       {"name": "R", "type": "point", "step": 8,
                         "params": ["L_B"]},
-                       {"name": "bar_lower", "type": "point", "step": 9,
+                       {"name": "L", "type": "point", "step": 9,
                         "params": ["L_B"]},
                    ]},
               ]},
          ]},
-        {"name": "servo_r", "type": "frame", "step": 10,
+        {"name": "C", "type": "frame", "step": 10,
          "relation": "translate to [x_e, +y_e, z_e]",
          "params": ["x_e", "y_e", "z_e"],
          "children": [
-             {"name": "link_r", "type": "point", "step": 11,
+             {"name": "D", "type": "point", "step": 11,
               "relation": "on circle, radius R, angle beta1",
               "params": ["R", "beta1"]},
          ]},
-        {"name": "servo_l", "type": "frame", "step": 12,
+        {"name": "E", "type": "frame", "step": 12,
          "relation": "translate to [x_e, -y_e, z_e]",
          "params": ["x_e", "y_e", "z_e"],
          "children": [
-             {"name": "link_l", "type": "point", "step": 13,
+             {"name": "F", "type": "point", "step": 13,
               "relation": "on circle, radius R, angle beta2",
               "params": ["R", "beta2"]},
          ]},
@@ -100,48 +100,43 @@ GROWTH_TREE = {
 
 VIS_ELEMENTS = [
     # ── reference (dot line, light grey) ──
-    {"id": "base_pivot_line",   "type": "line",   "color": "#cccccc", "style": "ref",
-     "from": "base", "to": "pivot"},
-    {"id": "rot_axis",          "type": "line",   "color": "#cccccc", "style": "ref",
+    {"id": "BP_line",          "type": "line",   "color": "#cccccc", "style": "ref",
+     "from": "B", "to": "P"},
+    {"id": "rot_axis",         "type": "line",   "color": "#cccccc", "style": "ref",
      "from": "rot_axis_start", "to": "rot_axis_end"},
-    {"id": "servo_r_circle",    "type": "circle", "color": "#cccccc", "center": "servo_r", "radius_param": "R", "style": "ref"},
-    {"id": "servo_l_circle",    "type": "circle", "color": "#cccccc", "center": "servo_l", "radius_param": "R", "style": "ref"},
+    {"id": "C_circle",          "type": "circle", "color": "#cccccc", "center": "C", "radius_param": "R", "style": "ref"},
+    {"id": "E_circle",          "type": "circle", "color": "#cccccc", "center": "E", "radius_param": "R", "style": "ref"},
 
-    # ── spheres (all same tone) ──
-    {"id": "base_sphere",       "type": "sphere", "color": "#e8a020", "label": "base",      "radius": 1.5, "point": "base"},
-    {"id": "pivot_sphere",      "type": "sphere", "color": "#e8a020", "label": "pivot",     "radius": 1.5, "point": "pivot"},
-    {"id": "arm_sphere",        "type": "sphere", "color": "#e8a020", "label": "arm",       "radius": 1.2, "point": "arm"},
-    {"id": "proximal_sphere",   "type": "sphere", "color": "#e8a020", "label": "proximal",  "radius": 1.5, "point": "proximal"},
-    {"id": "upright_sphere",    "type": "sphere", "color": "#e8a020", "label": "upright",   "radius": 1.5, "point": "upright"},
-    {"id": "tip_sphere",        "type": "sphere", "color": "#e8a020", "label": "tip",       "radius": 1.2, "point": "tip"},
-    {"id": "bar_upper_sphere",  "type": "sphere", "color": "#e8a020", "label": "bar_upper", "radius": 1.5, "point": "bar_upper"},
-    {"id": "bar_lower_sphere",  "type": "sphere", "color": "#e8a020", "label": "bar_lower", "radius": 1.5, "point": "bar_lower"},
-    {"id": "servo_r_sphere",    "type": "sphere", "color": "#e8a020", "label": "servo_r",   "radius": 1.0, "point": "servo_r"},
-    {"id": "servo_l_sphere",    "type": "sphere", "color": "#e8a020", "label": "servo_l",   "radius": 1.0, "point": "servo_l"},
-    {"id": "link_r_sphere",     "type": "sphere", "color": "#e8a020", "label": "link_r",    "radius": 1.5, "point": "link_r"},
-    {"id": "link_l_sphere",     "type": "sphere", "color": "#e8a020", "label": "link_l",    "radius": 1.5, "point": "link_l"},
+    # ── spheres ──
+    {"id": "B_sphere",         "type": "sphere", "color": "#e8a020", "label": "B",  "radius": 1.5, "point": "B"},
+    {"id": "P_sphere",         "type": "sphere", "color": "#e8a020", "label": "P",  "radius": 1.5, "point": "P"},
+    {"id": "A_sphere",         "type": "sphere", "color": "#e8a020", "label": "A",  "radius": 1.2, "point": "A"},
+    {"id": "Q_sphere",         "type": "sphere", "color": "#e8a020", "label": "Q",  "radius": 1.5, "point": "Q"},
+    {"id": "U_sphere",         "type": "sphere", "color": "#e8a020", "label": "U",  "radius": 1.5, "point": "U"},
+    {"id": "T_sphere",         "type": "sphere", "color": "#e8a020", "label": "T",  "radius": 1.2, "point": "T"},
+    {"id": "R_sphere",         "type": "sphere", "color": "#e8a020", "label": "R",  "radius": 1.5, "point": "R"},
+    {"id": "L_sphere",         "type": "sphere", "color": "#e8a020", "label": "L",  "radius": 1.5, "point": "L"},
+    {"id": "C_sphere",         "type": "sphere", "color": "#e8a020", "label": "C",  "radius": 1.0, "point": "C"},
+    {"id": "E_sphere",         "type": "sphere", "color": "#e8a020", "label": "E",  "radius": 1.0, "point": "E"},
+    {"id": "D_sphere",         "type": "sphere", "color": "#e8a020", "label": "D",  "radius": 1.5, "point": "D"},
+    {"id": "F_sphere",         "type": "sphere", "color": "#e8a020", "label": "F",  "radius": 1.5, "point": "F"},
 
-    # ── active (solid, amber) ──
-    {"id": "pivot_arm_line",    "type": "line",   "color": "#c88800", "from": "pivot", "to": "arm"},
-    {"id": "pivot_proximal_line","type": "line",  "color": "#c88800", "from": "pivot", "to": "proximal"},
-    {"id": "pivot_upright_line","type": "line",   "color": "#c88800", "from": "pivot", "to": "upright"},
-    {"id": "upright_tip_line",  "type": "line",   "color": "#c88800", "from": "upright", "to": "tip"},
-    {"id": "bar_line",          "type": "line",   "color": "#c88800", "from": "bar_upper", "to": "bar_lower"},
+    # ── active (solid) ──
+    {"id": "PA_line",          "type": "line",   "color": "#c88800", "from": "P", "to": "A"},
+    {"id": "PQ_line",          "type": "line",   "color": "#c88800", "from": "P", "to": "Q"},
+    {"id": "PU_line",          "type": "line",   "color": "#c88800", "from": "P", "to": "U"},
+    {"id": "UT_line",          "type": "line",   "color": "#c88800", "from": "U", "to": "T"},
+    {"id": "RL_line",          "type": "line",   "color": "#c88800", "from": "R", "to": "L"},
 
-    # ── passive (short dash, lighter amber) ──
-    {"id": "proximal_upright_line","type": "line","color": "#d4b870", "style": "passive",
-     "from": "proximal", "to": "upright"},
-    {"id": "proximal_tip_line",  "type": "line",  "color": "#d4b870", "style": "passive",
-     "from": "proximal", "to": "tip"},
-    {"id": "arm_proximal_line",  "type": "line",  "color": "#d4b870", "style": "passive",
-     "from": "arm", "to": "proximal"},
-    {"id": "link_right_line",   "type": "line",   "color": "#d4b870", "style": "passive",
-     "from": "bar_upper", "to": "link_r"},
-    {"id": "link_left_line",    "type": "line",   "color": "#d4b870", "style": "passive",
-     "from": "bar_lower", "to": "link_l"},
+    # ── passive (short dash) ──
+    {"id": "QU_line",          "type": "line",   "color": "#d4b870", "style": "passive", "from": "Q", "to": "U"},
+    {"id": "QT_line",          "type": "line",   "color": "#d4b870", "style": "passive", "from": "Q", "to": "T"},
+    {"id": "AQ_line",          "type": "line",   "color": "#d4b870", "style": "passive", "from": "A", "to": "Q"},
+    {"id": "RD_line",          "type": "line",   "color": "#d4b870", "style": "passive", "from": "R", "to": "D"},
+    {"id": "LF_line",          "type": "line",   "color": "#d4b870", "style": "passive", "from": "L", "to": "F"},
 ]
 
-FRAME_NAMES = ["base", "pivot", "rocker", "servo_r", "servo_l"]
+FRAME_NAMES = ["B", "P", "Rk", "C", "E"]
 
 
 # ============================================================
@@ -160,7 +155,7 @@ def compute(params: dict[str, float]) -> dict:
     z0    = params["z0"]
     L_cp  = params["L_cp"]
     L_A   = params["L_A"]
-    L_P   = params["L_P"]
+    L_Q   = params["L_Q"]
     L_U   = params["L_U"]
     L_T   = params["L_T"]
     L_B   = params["L_B"]
@@ -175,60 +170,60 @@ def compute(params: dict[str, float]) -> dict:
     beta2 = math.radians(params["beta2"])
 
     # 固定点
-    base_pos  = np.array([0.0, 0.0, z0])
-    pivot_pos = np.array([L_cp, 0.0, z0])
+    B_pos = np.array([0.0, 0.0, z0])
+    P_pos = np.array([L_cp, 0.0, z0])
 
     # 旋转子系统
     Rmat = _rot_x(theta)
     xA = L_A * math.sin(alpha)
     zA = L_A * math.cos(alpha)
 
-    arm_local       = np.array([xA, 0.0, zA])
-    xP = L_P * math.sin(gamma)
-    zP = L_P * math.cos(gamma)
-    proximal_local  = np.array([xP, 0.0, zP])
-    upright_local   = np.array([0.0, 0.0, L_U])
-    bar_upper_local = np.array([xA,  L_B / 2, zA])
-    bar_lower_local = np.array([xA, -L_B / 2, zA])
+    A_local  = np.array([xA, 0.0, zA])
+    xQ = L_Q * math.sin(gamma)
+    zQ = L_Q * math.cos(gamma)
+    Q_local  = np.array([xQ, 0.0, zQ])
+    U_local  = np.array([0.0, 0.0, L_U])
+    T_local  = np.array([0.0, 0.0, L_U + L_T])
+    R_local  = np.array([xA,  L_B / 2, zA])
+    L_local  = np.array([xA, -L_B / 2, zA])
 
-    arm_world       = pivot_pos + Rmat @ arm_local
-    proximal_world  = pivot_pos + Rmat @ proximal_local
-    upright_world   = pivot_pos + Rmat @ upright_local
-    tip_local       = np.array([0.0, 0.0, L_U + L_T])
-    tip_world       = pivot_pos + Rmat @ tip_local
-    bar_upper_world = pivot_pos + Rmat @ bar_upper_local
-    bar_lower_world = pivot_pos + Rmat @ bar_lower_local
+    A_world = P_pos + Rmat @ A_local
+    Q_world = P_pos + Rmat @ Q_local
+    U_world = P_pos + Rmat @ U_local
+    T_world = P_pos + Rmat @ T_local
+    R_world = P_pos + Rmat @ R_local
+    L_world = P_pos + Rmat @ L_local
 
     # 舵机
-    servo_r_pos = np.array([x_e,  y_e, z_e])
-    servo_l_pos = np.array([x_e, -y_e, z_e])
+    C_pos = np.array([x_e,  y_e, z_e])
+    E_pos = np.array([x_e, -y_e, z_e])
 
-    link_r_pos = servo_r_pos + np.array([0, R * math.cos(beta1), R * math.sin(beta1)])
-    link_l_pos = servo_l_pos + np.array([0, R * math.cos(beta2), R * math.sin(beta2)])
+    D_pos = C_pos + np.array([0, R * math.cos(beta1), R * math.sin(beta1)])
+    F_pos = E_pos + np.array([0, R * math.cos(beta2), R * math.sin(beta2)])
 
     # 旋转轴
     axis_half = 25
-    rot_axis_start = pivot_pos + np.array([-axis_half, 0, 0])
-    rot_axis_end   = pivot_pos + np.array([ axis_half, 0, 0])
+    rot_axis_start = P_pos + np.array([-axis_half, 0, 0])
+    rot_axis_end   = P_pos + np.array([ axis_half, 0, 0])
 
     # 连杆长度（自动计算）
-    L_link_r = float(np.linalg.norm(bar_upper_world - link_r_pos))
-    L_link_l = float(np.linalg.norm(bar_lower_world - link_l_pos))
+    L_link_r = float(np.linalg.norm(R_world - D_pos))
+    L_link_l = float(np.linalg.norm(L_world - F_pos))
 
     points = {
         "origin":         [0.0, 0.0, 0.0],
-        "base":           base_pos.tolist(),
-        "pivot":          pivot_pos.tolist(),
-        "arm":            arm_world.tolist(),
-        "proximal":       proximal_world.tolist(),
-        "upright":        upright_world.tolist(),
-        "tip":            tip_world.tolist(),
-        "bar_upper":      bar_upper_world.tolist(),
-        "bar_lower":      bar_lower_world.tolist(),
-        "servo_r":        servo_r_pos.tolist(),
-        "servo_l":        servo_l_pos.tolist(),
-        "link_r":         link_r_pos.tolist(),
-        "link_l":         link_l_pos.tolist(),
+        "B":              B_pos.tolist(),
+        "P":              P_pos.tolist(),
+        "A":              A_world.tolist(),
+        "Q":              Q_world.tolist(),
+        "U":              U_world.tolist(),
+        "T":              T_world.tolist(),
+        "R":              R_world.tolist(),
+        "L":              L_world.tolist(),
+        "C":              C_pos.tolist(),
+        "E":              E_pos.tolist(),
+        "D":              D_pos.tolist(),
+        "F":              F_pos.tolist(),
         "rot_axis_start": rot_axis_start.tolist(),
         "rot_axis_end":   rot_axis_end.tolist(),
     }
@@ -237,12 +232,12 @@ def compute(params: dict[str, float]) -> dict:
     axes_rocker = Rmat.T.tolist()
 
     frames = {
-        "world":    {"origin": [0, 0, 0],             "axes": I3},
-        "base":     {"origin": base_pos.tolist(),      "axes": I3},
-        "pivot":    {"origin": pivot_pos.tolist(),     "axes": I3},
-        "rocker":   {"origin": pivot_pos.tolist(),     "axes": axes_rocker},
-        "servo_r":  {"origin": servo_r_pos.tolist(),   "axes": I3},
-        "servo_l":  {"origin": servo_l_pos.tolist(),   "axes": I3},
+        "world": {"origin": [0, 0, 0],             "axes": I3},
+        "B":     {"origin": B_pos.tolist(),          "axes": I3},
+        "P":     {"origin": P_pos.tolist(),           "axes": I3},
+        "Rk":    {"origin": P_pos.tolist(),           "axes": axes_rocker},
+        "C":     {"origin": C_pos.tolist(),           "axes": I3},
+        "E":     {"origin": E_pos.tolist(),           "axes": I3},
     }
 
     return {

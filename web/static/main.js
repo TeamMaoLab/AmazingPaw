@@ -13,26 +13,25 @@ let selectedName = null;
 // ── highlight mapping ──
 const frameChildPoints = {
     'world': [],
-    'base': ['base'],
-    'pivot': ['pivot'],
-    'rocker': ['arm', 'proximal', 'upright', 'tip', 'bar_upper', 'bar_lower'],
-    'servo_r': ['servo_r', 'link_r'],
-    'servo_l': ['servo_l', 'link_l'],
+    'B': ['B'],
+    'P': ['P'],
+    'Rk': ['A', 'Q', 'U', 'T', 'R', 'L'],
+    'C': ['C', 'D'],
+    'E': ['E', 'F'],
 };
 const pointToElements = {
-    'base':      ['base_pivot_line'],
-    'pivot':     ['base_pivot_line', 'pivot_arm_line', 'pivot_proximal_line', 'pivot_upright_line', 'rot_axis'],
-    'arm':       ['pivot_arm_line', 'bar_line'],
-    'proximal':  ['pivot_proximal_line', 'proximal_upright_line', 'proximal_tip_line', 'arm_proximal_line'],
-    'upright':   ['pivot_upright_line', 'upright_tip_line', 'proximal_upright_line'],
-    'tip':       ['upright_tip_line', 'proximal_tip_line'],
-    'arm':       ['pivot_arm_line', 'bar_line', 'arm_proximal_line'],
-    'bar_upper': ['bar_line', 'link_right_line'],
-    'bar_lower': ['bar_line', 'link_left_line'],
-    'link_r':    ['link_right_line', 'servo_r_circle'],
-    'link_l':    ['link_left_line', 'servo_l_circle'],
-    'servo_r':   ['servo_r_circle'],
-    'servo_l':   ['servo_l_circle'],
+    'B': ['BP_line'],
+    'P': ['BP_line', 'PA_line', 'PQ_line', 'PU_line', 'rot_axis'],
+    'A': ['PA_line', 'RL_line', 'AQ_line'],
+    'Q': ['PQ_line', 'QU_line', 'QT_line', 'AQ_line'],
+    'U': ['PU_line', 'UT_line', 'QU_line'],
+    'T': ['UT_line', 'QT_line'],
+    'R': ['RL_line', 'RD_line'],
+    'L': ['RL_line', 'LF_line'],
+    'C': ['C_circle'],
+    'E': ['E_circle'],
+    'D': ['RD_line', 'C_circle'],
+    'F': ['LF_line', 'E_circle'],
 };
 
 function getRelatedNames(name) {
