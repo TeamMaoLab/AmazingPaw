@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finger Mechanism Kinematics</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: #1a1a2e; color: #e0e0e0; overflow: hidden; height: 100vh; }
+
+/* 顶栏 */
+.header { height: 44px; background: #16213e; display: flex; align-items: center; padding: 0 16px; border-bottom: 1px solid #0f3460; }
+.header h1 { font-size: 15px; font-weight: 600; color: #e0e0e0; }
+.header .status { margin-left: auto; font-size: 12px; color: #8899aa; }
+.header .status.solving { color: #ffcc00; }
+.header .status.error { color: #ff4444; }
+
+/* 三栏布局 */
+.main { display: flex; height: calc(100vh - 44px - 28px); }
+
+/* 左栏：生长树 */
+.panel-tree { width: 240px; min-width: 240px; background: #16213e; border-right: 1px solid #0f3460; overflow-y: auto; padding: 12px; }
+.panel-tree h2 { font-size: 13px; color: #8899aa; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+
+.tree { list-style: none; padding-left: 16px; }
+.tree .root { padding-left: 0; }
+.tree li { position: relative; padding: 3px 0; }
+.tree li::before { content: ''; position: absolute; left: -12px; top: 12px; width: 10px; height: 1px; background: #334; }
+.tree li::after { content: ''; position: absolute; left: -12px; top: 0; width: 1px; height: 12px; background: #334; }
+.tree li:last-child::after { height: 12px; }
+.tree .node { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; padding: 2px 6px; border-radius: 4px; font-size: 13px; transition: background 0.15s; }
+.tree .node:hover { background: #0f3460; }
+.tree .node.active { background: #0f3460; color: #fff; }
+.tree .icon { font-size: 10px; }
+.tree .icon.frame { color: #4488ff; }
+.tree .icon.point { color: #ff8844; }
+.tree .step-badge { font-size: 10px; background: #0f3460; color: #8899aa; padding: 1px 5px; border-radius: 3px; margin-left: 4px; }
+
+/* 中栏：3D 视口 */
+.viewport { flex: 1; position: relative; }
+.viewport canvas { display: block; }
+
+/* 右栏：参数面板 */
+.panel-params { width: 300px; min-width: 300px; background: #16213e; border-left: 1px solid #0f3460; overflow-y: auto; padding: 12px; }
+.panel-params h2 { font-size: 13px; color: #8899aa; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+
+.section { margin-bottom: 16px; }
+.section-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 6px 0; border-bottom: 1px solid #0f3460; }
+.section-header h3 { font-size: 13px; font-weight: 500; }
+.section-header .toggle { font-size: 11px; color: #8899aa; }
+.section-body { padding: 4px 0; }
+.section-body.collapsed { display: none; }
+
+.param-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
+.param-row label { font-size: 12px; min-width: 90px; color: #aabbcc; }
+.param-row input[type="range"] { flex: 1; height: 4px; -webkit-appearance: none; background: #0f3460; border-radius: 2px; outline: none; }
+.param-row input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; background: #4488ff; border-radius: 50%; cursor: pointer; }
+.param-row .val { font-size: 12px; min-width: 52px; text-align: right; font-family: "SF Mono", Menlo, monospace; color: #e0e0e0; }
+
+/* 求解结果 */
+.results { padding: 4px 0; }
+.result-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; }
+.result-row .label { color: #aabbcc; }
+.result-row .value { font-family: "SF Mono", Menlo, monospace; color: #44ff88; }
+.result-row .value.fail { color: #ff4444; }
+
+/* 底栏 */
+.footer { height: 28px; background: #16213e; border-top: 1px solid #0f3460; display: flex; align-items: center; padding: 0 16px; font-size: 11px; color: #556677; }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Finger Mechanism Kinematics</h1>
+    <span class="status" id="status">Loading...</span>
+</div>
+
+<div class="main">
+    <!-- 左栏：生长树 -->
+    <div class="panel-tree">
+        <h2>Growth Tree</h2>
+        <div id="tree-container"></div>
+    </div>
+
+    <!-- 中栏：3D 视口 -->
+    <div class="viewport" id="viewport"></div>
+
+    <!-- 右栏：参数面板 -->
+    <div class="panel-params">
+        <div class="section">
+            <h2>Active Controls</h2>
+            <div class="section-body" id="active-sliders"></div>
+        </div>
+
+        <div class="section">
+            <div class="section-header" onclick="toggleSection('fixed')">
+                <h3>Fixed Parameters</h3>
+                <span class="toggle" id="fixed-toggle">▼</span>
+            </div>
+            <div class="section-body collapsed" id="fixed-body"></div>
+        </div>
+
+        <div class="section">
+            <h2>Solve Results</h2>
+            <div class="results" id="results">
+                <div class="result-row"><span class="label">alpha</span><span class="value" id="res-alpha">--</span></div>
+                <div class="result-row"><span class="label">theta</span><span class="value" id="res-theta">--</span></div>
+                <div class="result-row"><span class="label">right link</span><span class="value" id="res-link-r">--</span></div>
+                <div class="result-row"><span class="label">left link</span><span class="value" id="res-link-l">--</span></div>
+                <div class="result-row"><span class="label">status</span><span class="value" id="res-status">--</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="footer" id="footer">Ready</div>
+
+<!-- Three.js from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.170.0/examples/js/controls/OrbitControls.js"></script>
+
+<script>
+// ============================================================
+// 全局状态
+// ============================================================
+let mechanismDef = null;
+let currentFixed = {};
+let currentActive = {};
+
+// Three.js 对象
+let scene, camera, renderer, controls;
+let pointMeshes = {};     // name -> THREE.Mesh
+let lineObjects = {};     // id -> THREE.Line
+let circleObjects = {};   // id -> THREE.Line
+let labelDivs = {};       // name -> HTMLDivElement
+
+const AXIS_LEN = 20;
+const SPHERE_SEGMENTS = 16;
+
+// ============================================================
+// 初始化
+// ============================================================
+async function init() {
+    // 加载机构定义
+    const resp = await fetch('/api/mechanism/default');
+    mechanismDef = await resp.json();
+
+    // 设置默认参数
+    for (const [k, v] of Object.entries(mechanismDef.fixed_params)) {
+        currentFixed[k] = v.value;
+    }
+    for (const [k, v] of Object.entries(mechanismDef.active_params)) {
+        currentActive[k] = v.value;
+    }
+
+    buildTree(mechanismDef.growth_tree);
+    buildSliders();
+    initThreeJS();
+    await doSolve();
+}
+
+// ============================================================
+// 生长树
+// ============================================================
+function buildTree(node, container, isRoot) {
+    const ul = document.createElement('ul');
+    ul.className = isRoot ? 'tree root' : 'tree';
+
+    const li = document.createElement('li');
+
+    const span = document.createElement('span');
+    span.className = 'node';
+    const iconClass = node.type === 'frame' ? 'frame' : 'point';
+    const iconChar = node.type === 'frame' ? '■' : '●';
+    span.innerHTML = `<span class="icon ${iconClass}">${iconChar}</span>${node.name}`;
+    if (node.step) {
+        const badge = document.createElement('span');
+        badge.className = 'step-badge';
+        badge.textContent = 'S' + node.step;
+        span.appendChild(badge);
+    }
+    span.addEventListener('click', () => highlightNode(node.name));
+    li.appendChild(span);
+
+    if (node.children) {
+        for (const child of node.children) {
+            buildTree(child, li, false);
+        }
+    }
+    ul.appendChild(li);
+    container.appendChild(ul);
+}
+
+function highlightNode(name) {
+    document.querySelectorAll('.tree .node').forEach(n => n.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    // 高亮对应的 3D 对象
+    highlight3D(name);
+}
+
+function highlight3D(name) {
+    // 暂时用闪烁效果提示选中
+    const mesh = pointMeshes[name];
+    if (mesh) {
+        const origColor = mesh.material.color.getHex();
+        mesh.material.color.setHex(0xffffff);
+        setTimeout(() => mesh.material.color.setHex(origColor), 300);
+    }
+}
+
+// ============================================================
+// 滑块构建
+// ============================================================
+function buildSliders() {
+    const activeContainer = document.getElementById('active-sliders');
+    for (const [key, spec] of Object.entries(mechanismDef.active_params)) {
+        activeContainer.appendChild(createSlider(key, spec, 'active'));
+    }
+
+    const fixedContainer = document.getElementById('fixed-body');
+    for (const [key, spec] of Object.entries(mechanismDef.fixed_params)) {
+        fixedContainer.appendChild(createSlider(key, spec, 'fixed'));
+    }
+}
+
+function createSlider(key, spec, group) {
+    const row = document.createElement('div');
+    row.className = 'param-row';
+
+    const label = document.createElement('label');
+    label.textContent = spec.label;
+
+    const input = document.createElement('input');
+    input.type = 'range';
+    input.min = spec.min;
+    input.max = spec.max;
+    input.step = 1;
+    input.value = spec.value;
+    input.id = `slider-${group}-${key}`;
+
+    const val = document.createElement('span');
+    val.className = 'val';
+    val.textContent = spec.value + (spec.unit === 'deg' ? '°' : '');
+    val.id = `val-${group}-${key}`;
+
+    input.addEventListener('input', () => {
+        const v = parseFloat(input.value);
+        val.textContent = v + (spec.unit === 'deg' ? '°' : '');
+        if (group === 'active') currentActive[key] = v;
+        else currentFixed[key] = v;
+        debouncedSolve();
+    });
+
+    row.appendChild(label);
+    row.appendChild(input);
+    row.appendChild(val);
+    return row;
+}
+
+function toggleSection(id) {
+    const body = document.getElementById(id + '-body');
+    const toggle = document.getElementById(id + '-toggle');
+    body.classList.toggle('collapsed');
+    toggle.textContent = body.classList.contains('collapsed') ? '▶' : '▼';
+}
+
+// ============================================================
+// Three.js 初始化
+// ============================================================
+function initThreeJS() {
+    const container = document.getElementById('viewport');
+    const w = container.clientWidth;
+    const h = container.clientHeight;
+
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x1a1a2e);
+
+    camera = new THREE.PerspectiveCamera(50, w / h, 0.1, 5000);
+    camera.position.set(50, -60, 60);
+    camera.up.set(0, 0, 1);
+
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(w, h);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    container.appendChild(renderer.domElement);
+
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.target.set(10, 0, 20);
+    controls.update();
+
+    // 世界坐标轴
+    addAxis(new THREE.Vector3(0,0,0), new THREE.Vector3(AXIS_LEN,0,0), 0xff0000);
+    addAxis(new THREE.Vector3(0,0,0), new THREE.Vector3(0,AXIS_LEN,0), 0x00ff00);
+    addAxis(new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,AXIS_LEN), 0x4444ff);
+
+    // 网格辅助
+    const grid = new THREE.GridHelper(100, 20, 0x222244, 0x1a1a3a);
+    grid.rotation.x = Math.PI / 2;
+    grid.position.z = 0;
+    scene.add(grid);
+
+    // 创建所有可视化元素
+    for (const el of mechanismDef.visualization) {
+        createVisElement(el);
+    }
+
+    // 响应窗口大小
+    window.addEventListener('resize', onResize);
+
+    animate();
+}
+
+function addAxis(from, to, color) {
+    const mat = new THREE.LineBasicMaterial({ color, linewidth: 2 });
+    const geom = new THREE.BufferGeometry().setFromPoints([from, to]);
+    scene.add(new THREE.Line(geom, mat));
+}
+
+function createVisElement(el) {
+    if (el.type === 'sphere') {
+        const geom = new THREE.SphereGeometry(el.radius, SPHERE_SEGMENTS, SPHERE_SEGMENTS);
+        const mat = new THREE.MeshBasicMaterial({ color: el.color });
+        const mesh = new THREE.Mesh(geom, mat);
+        mesh.position.set(0, 0, 0);
+        scene.add(mesh);
+        pointMeshes[el.point] = mesh;
+
+        // 标签
+        if (el.label) {
+            const div = document.createElement('div');
+            div.style.cssText = 'position:absolute;color:#aabbcc;font-size:11px;pointer-events:none;white-space:nowrap;font-family:sans-serif;';
+            div.textContent = el.label;
+            document.getElementById('viewport').appendChild(div);
+            labelDivs[el.point] = div;
+        }
+    }
+    else if (el.type === 'line') {
+        const positions = new Float32Array(6);
+        const geom = new THREE.BufferGeometry();
+        geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        let mat;
+        if (el.dash) {
+            mat = new THREE.LineDashedMaterial({ color: el.color, dashSize: 2, gapSize: 1.5 });
+        } else {
+            mat = new THREE.LineBasicMaterial({ color: el.color, linewidth: el.width || 2 });
+        }
+        const line = new THREE.Line(geom, mat);
+        if (el.dash) line.computeLineDistances();
+        scene.add(line);
+        lineObjects[el.id] = line;
+    }
+    else if (el.type === 'circle') {
+        const segments = 64;
+        const positions = new Float32Array((segments + 1) * 3);
+        const geom = new THREE.BufferGeometry();
+        geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        const mat = new THREE.LineBasicMaterial({ color: el.color });
+        const line = new THREE.Line(geom, mat);
+        scene.add(line);
+        circleObjects[el.id] = line;
+    }
+}
+
+// ============================================================
+// 场景更新
+// ============================================================
+function updateScene(data) {
+    const pts = data.points;
+
+    // 更新球体位置
+    for (const [name, mesh] of Object.entries(pointMeshes)) {
+        if (pts[name]) {
+            mesh.position.set(pts[name][0], pts[name][1], pts[name][2]);
+        }
+    }
+
+    // 更新线条
+    for (const el of mechanismDef.visualization) {
+        if (el.type === 'line') {
+            const line = lineObjects[el.id];
+            if (line && pts[el.from] && pts[el.to]) {
+                const pos = line.geometry.attributes.position.array;
+                pos[0] = pts[el.from][0]; pos[1] = pts[el.from][1]; pos[2] = pts[el.from][2];
+                pos[3] = pts[el.to][0];   pos[4] = pts[el.to][1];   pos[5] = pts[el.to][2];
+                line.geometry.attributes.position.needsUpdate = true;
+                if (el.dash) line.computeLineDistances();
+            }
+        }
+        else if (el.type === 'circle') {
+            const line = circleObjects[el.id];
+            const center = pts[el.center];
+            const radius = currentFixed[el.radius_param] || 16;
+            if (line && center) {
+                const pos = line.geometry.attributes.position.array;
+                const segments = (pos.length / 3) - 1;
+                for (let i = 0; i <= segments; i++) {
+                    const angle = (i / segments) * Math.PI * 2;
+                    const idx = i * 3;
+                    pos[idx]     = center[0];
+                    pos[idx + 1] = center[1] + radius * Math.cos(angle);
+                    pos[idx + 2] = center[2] + radius * Math.sin(angle);
+                }
+                line.geometry.attributes.position.needsUpdate = true;
+            }
+        }
+    }
+
+    // 更新标签位置
+    for (const [name, div] of Object.entries(labelDivs)) {
+        if (pts[name]) {
+            const v = new THREE.Vector3(pts[name][0], pts[name][1], pts[name][2]);
+            v.project(camera);
+            const rect = renderer.domElement.getBoundingClientRect();
+            const x = (v.x * 0.5 + 0.5) * rect.width;
+            const y = (-v.y * 0.5 + 0.5) * rect.height;
+            div.style.left = (x + 8) + 'px';
+            div.style.top = (y - 6) + 'px';
+            div.style.display = v.z < 1 ? '' : 'none';
+        }
+    }
+
+    // 更新结果面板
+    const resAlpha = document.getElementById('res-alpha');
+    const resTheta = document.getElementById('res-theta');
+    const resLinkR = document.getElementById('res-link-r');
+    const resLinkL = document.getElementById('res-link-l');
+    const resStatus = document.getElementById('res-status');
+
+    resAlpha.textContent = data.alpha_deg.toFixed(2) + '°';
+    resTheta.textContent = data.theta_deg.toFixed(2) + '°';
+    resLinkR.textContent = data.link_lengths.right.toFixed(2) + ' mm';
+    resLinkL.textContent = data.link_lengths.left.toFixed(2) + ' mm';
+
+    if (data.success) {
+        resStatus.textContent = 'OK';
+        resStatus.className = 'value';
+    } else {
+        resStatus.textContent = 'No solution';
+        resStatus.className = 'value fail';
+    }
+}
+
+// ============================================================
+// 求解
+// ============================================================
+let solveTimeout = null;
+function debouncedSolve() {
+    clearTimeout(solveTimeout);
+    setStatus('Solving...', 'solving');
+    solveTimeout = setTimeout(doSolve, 50);
+}
+
+async function doSolve() {
+    try {
+        const resp = await fetch('/api/solve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                fixed_params: currentFixed,
+                active_params: currentActive,
+            }),
+        });
+        const data = await resp.json();
+        updateScene(data);
+        setStatus(data.success ? 'Ready' : 'No solution', data.success ? '' : 'error');
+    } catch (err) {
+        setStatus('Error: ' + err.message, 'error');
+    }
+}
+
+function setStatus(text, cls) {
+    const el = document.getElementById('status');
+    el.textContent = text;
+    el.className = 'status ' + (cls || '');
+    document.getElementById('footer').textContent = text;
+}
+
+// ============================================================
+// 渲染循环 & 窗口缩放
+// ============================================================
+function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    // 每帧更新标签位置
+    updateLabels();
+    renderer.render(scene, camera);
+}
+
+function updateLabels() {
+    for (const [name, div] of Object.entries(labelDivs)) {
+        if (!pointMeshes[name]) continue;
+        const v = pointMeshes[name].position.clone();
+        v.project(camera);
+        const rect = renderer.domElement.getBoundingClientRect();
+        const x = (v.x * 0.5 + 0.5) * rect.width;
+        const y = (-v.y * 0.5 + 0.5) * rect.height;
+        div.style.left = (x + 8) + 'px';
+        div.style.top = (y - 6) + 'px';
+        div.style.display = v.z < 1 ? '' : 'none';
+    }
+}
+
+function onResize() {
+    const container = document.getElementById('viewport');
+    const w = container.clientWidth;
+    const h = container.clientHeight;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+}
+
+// 启动
+init();
+</script>
+</body>
+</html>
