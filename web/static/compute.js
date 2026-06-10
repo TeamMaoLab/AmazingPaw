@@ -3,7 +3,7 @@
  */
 export function localCompute(params) {
     const deg = Math.PI / 180;
-    const z0 = params.z0, L_cp = params.L_cp, L_A = params.L_A, L_P = params.L_P, L_B = params.L_B;
+    const z0 = params.z0, L_cp = params.L_cp, L_A = params.L_A, L_P = params.L_P, L_U = params.L_U, L_B = params.L_B;
     const theta = params.theta * deg, alpha = params.alpha * deg, gamma = params.gamma * deg;
     const x_e = params.x_e, y_e = params.y_e, z_e = params.z_e;
     const R = params.R, beta1 = params.beta1 * deg, beta2 = params.beta2 * deg;
@@ -25,6 +25,7 @@ export function localCompute(params) {
     const arm_world = add(pivot_pos, mul(Rx, arm_local));
     const xP = L_P * Math.sin(gamma), zP = L_P * Math.cos(gamma);
     const proximal_world = add(pivot_pos, mul(Rx, [xP, 0, zP]));
+    const upright_world = add(pivot_pos, mul(Rx, [0, 0, L_U]));
     const bar_upper_world = add(pivot_pos, mul(Rx, bar_upper_local));
     const bar_lower_world = add(pivot_pos, mul(Rx, bar_lower_local));
 
@@ -45,7 +46,7 @@ export function localCompute(params) {
     return {
         points: {
             origin: [0,0,0], base: base_pos, pivot: pivot_pos,
-            arm: arm_world, proximal: proximal_world,
+            arm: arm_world, proximal: proximal_world, upright: upright_world,
             bar_upper: bar_upper_world, bar_lower: bar_lower_world,
             servo_r: servo_r_pos, servo_l: servo_l_pos,
             link_r: link_r_pos, link_l: link_l_pos,

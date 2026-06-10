@@ -24,26 +24,28 @@ GROWTH_PARAMS = {
               "step": 4, "desc": "arm 与局部 +Z 夹角"},
     "L_A":   {"value": 7.0,   "min": 1,   "max": 20,  "unit": "mm",  "label": "arm length",
               "step": 4, "desc": "pivot → arm 距离"},
-    "gamma": {"value": -60.0, "min": -180, "max": 180, "unit": "deg", "label": "proximal angle",
+    "gamma": {"value": -5.0,  "min": -180, "max": 180, "unit": "deg", "label": "proximal angle",
               "step": 5, "desc": "proximal 与局部 +Z 夹角"},
     "L_P":   {"value": 55.0,  "min": 1,   "max": 100, "unit": "mm",  "label": "proximal length",
               "step": 5, "desc": "pivot → proximal 距离"},
+    "L_U":   {"value": 55.0,  "min": 1,   "max": 100, "unit": "mm",  "label": "upright length",
+              "step": 6, "desc": "pivot 沿局部 +Z 距离"},
     "L_B":   {"value": 14.0,  "min": 1,   "max": 30,  "unit": "mm",  "label": "bar span",
-              "step": 6, "desc": "bar_upper ↔ bar_lower 距离"},
+              "step": 7, "desc": "bar_upper ↔ bar_lower 距离"},
     "theta": {"value": 0.0,   "min": -90, "max": 90,  "unit": "deg", "label": "rocker tilt",
               "step": 3, "desc": "绕 X 轴旋转"},
     "x_e":   {"value": 11.0,  "min": 0,   "max": 30,  "unit": "mm",  "label": "servo X",
-              "step": 8, "desc": "舵机圆心 X"},
+              "step": 9, "desc": "舵机圆心 X"},
     "y_e":   {"value": 7.0,   "min": 0,   "max": 20,  "unit": "mm",  "label": "servo Y",
-              "step": 8, "desc": "舵机圆心 Y（绝对值）"},
+              "step": 9, "desc": "舵机圆心 Y（绝对值）"},
     "z_e":   {"value": 0.0,   "min": -20, "max": 20,  "unit": "mm",  "label": "servo Z",
-              "step": 8, "desc": "舵机圆心 Z"},
+              "step": 9, "desc": "舵机圆心 Z"},
     "R":     {"value": 16.0,  "min": 1,   "max": 30,  "unit": "mm",  "label": "servo radius",
-              "step": 9, "desc": "舵机圆半径"},
+              "step": 10, "desc": "舵机圆半径"},
     "beta1": {"value": 60.0,  "min": 0,   "max": 360, "unit": "deg", "label": "link_r angle",
-              "step": 9, "desc": "右舵机初始角度"},
+              "step": 10, "desc": "右舵机初始角度"},
     "beta2": {"value": 120.0, "min": 0,   "max": 360, "unit": "deg", "label": "link_l angle",
-              "step": 11, "desc": "左舵机初始角度"},
+              "step": 12, "desc": "左舵机初始角度"},
 }
 
 GROWTH_TREE = {
@@ -64,26 +66,28 @@ GROWTH_TREE = {
                         "params": ["alpha", "L_A"]},
                        {"name": "proximal", "type": "point", "step": 5,
                         "params": ["gamma", "L_P"]},
-                       {"name": "bar_upper", "type": "point", "step": 6,
+                       {"name": "upright", "type": "point", "step": 6,
+                        "params": ["L_U"]},
+                       {"name": "bar_upper", "type": "point", "step": 7,
                         "params": ["L_B"]},
-                       {"name": "bar_lower", "type": "point", "step": 7,
+                       {"name": "bar_lower", "type": "point", "step": 8,
                         "params": ["L_B"]},
                    ]},
               ]},
          ]},
-        {"name": "servo_r", "type": "frame", "step": 8,
+        {"name": "servo_r", "type": "frame", "step": 9,
          "relation": "translate to [x_e, +y_e, z_e]",
          "params": ["x_e", "y_e", "z_e"],
          "children": [
-             {"name": "link_r", "type": "point", "step": 9,
+             {"name": "link_r", "type": "point", "step": 10,
               "relation": "on circle, radius R, angle beta1",
               "params": ["R", "beta1"]},
          ]},
-        {"name": "servo_l", "type": "frame", "step": 10,
+        {"name": "servo_l", "type": "frame", "step": 11,
          "relation": "translate to [x_e, -y_e, z_e]",
          "params": ["x_e", "y_e", "z_e"],
          "children": [
-             {"name": "link_l", "type": "point", "step": 11,
+             {"name": "link_l", "type": "point", "step": 12,
               "relation": "on circle, radius R, angle beta2",
               "params": ["R", "beta2"]},
          ]},
@@ -99,6 +103,8 @@ VIS_ELEMENTS = [
     {"id": "arm_sphere",        "type": "sphere", "color": "#ddaa00", "label": "arm",       "radius": 1.2, "point": "arm"},
     {"id": "proximal_sphere",   "type": "sphere", "color": "#3388cc", "label": "proximal",  "radius": 1.5, "point": "proximal"},
     {"id": "pivot_proximal_line","type": "line",   "color": "#2266aa", "from": "pivot", "to": "proximal"},
+    {"id": "upright_sphere",    "type": "sphere", "color": "#44aa44", "label": "upright",   "radius": 1.5, "point": "upright"},
+    {"id": "pivot_upright_line","type": "line",    "color": "#338833", "from": "pivot", "to": "upright"},
     {"id": "bar_upper_sphere",  "type": "sphere", "color": "#ee3333", "label": "bar_upper", "radius": 1.5, "point": "bar_upper"},
     {"id": "bar_lower_sphere",  "type": "sphere", "color": "#ee3333", "label": "bar_lower", "radius": 1.5, "point": "bar_lower"},
     {"id": "bar_line",          "type": "line",   "color": "#aa00dd", "from": "bar_upper", "to": "bar_lower", "width": 3},
@@ -133,6 +139,7 @@ def compute(params: dict[str, float]) -> dict:
     L_cp  = params["L_cp"]
     L_A   = params["L_A"]
     L_P   = params["L_P"]
+    L_U   = params["L_U"]
     L_B   = params["L_B"]
     theta = math.radians(params["theta"])
     alpha = math.radians(params["alpha"])
@@ -157,11 +164,13 @@ def compute(params: dict[str, float]) -> dict:
     xP = L_P * math.sin(gamma)
     zP = L_P * math.cos(gamma)
     proximal_local  = np.array([xP, 0.0, zP])
+    upright_local   = np.array([0.0, 0.0, L_U])
     bar_upper_local = np.array([xA,  L_B / 2, zA])
     bar_lower_local = np.array([xA, -L_B / 2, zA])
 
     arm_world       = pivot_pos + Rmat @ arm_local
     proximal_world  = pivot_pos + Rmat @ proximal_local
+    upright_world   = pivot_pos + Rmat @ upright_local
     bar_upper_world = pivot_pos + Rmat @ bar_upper_local
     bar_lower_world = pivot_pos + Rmat @ bar_lower_local
 
@@ -187,6 +196,7 @@ def compute(params: dict[str, float]) -> dict:
         "pivot":          pivot_pos.tolist(),
         "arm":            arm_world.tolist(),
         "proximal":       proximal_world.tolist(),
+        "upright":        upright_world.tolist(),
         "bar_upper":      bar_upper_world.tolist(),
         "bar_lower":      bar_lower_world.tolist(),
         "servo_r":        servo_r_pos.tolist(),

@@ -36,25 +36,26 @@ body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: #
 .viewport .frame-label { position: absolute; color: #888; font-size: 10px; pointer-events: none; white-space: nowrap; font-style: italic; }
 
 /* 右栏 */
-.panel-params { width: 300px; min-width: 300px; background: #fff; border-left: 1px solid #ddd; overflow-y: auto; padding: 16px; }
+.panel-params { width: 280px; min-width: 280px; background: #fff; border-left: 1px solid #ddd; overflow-y: auto; padding: 12px; }
 
-.step-info { margin-bottom: 16px; }
-.step-info .step-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
-.step-info .step-type { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
-.step-info .step-relation { font-size: 13px; color: #555; margin-top: 8px; padding: 8px; background: #f8f8f8; border-radius: 4px; font-family: "SF Mono", Menlo, monospace; }
+.step-info { margin-bottom: 12px; }
+.step-info .step-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.step-info .step-type { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+.step-info .step-relation { font-size: 12px; color: #555; margin-top: 6px; padding: 6px; background: #f8f8f8; border-radius: 4px; font-family: "SF Mono", Menlo, monospace; word-break: break-all; }
 
-.param-group { margin-bottom: 16px; }
-.param-group h3 { font-size: 13px; color: #999; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
-.param-row { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
-.param-row label { font-size: 12px; min-width: 90px; color: #666; }
-.param-row input[type="range"] { flex: 1; height: 4px; -webkit-appearance: none; background: #ddd; border-radius: 2px; outline: none; }
+.param-group { margin-bottom: 12px; }
+.param-group h3 { font-size: 12px; color: #999; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+.param-row { display: flex; align-items: center; gap: 6px; margin: 6px 0; }
+.param-row label { font-size: 11px; min-width: 70px; color: #666; white-space: nowrap; }
+.param-row input[type="range"] { flex: 1; height: 4px; -webkit-appearance: none; background: #ddd; border-radius: 2px; outline: none; min-width: 0; }
 .param-row input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; background: #4488ff; border-radius: 50%; cursor: pointer; }
-.param-row .val { font-size: 12px; min-width: 56px; text-align: right; font-family: "SF Mono", Menlo, monospace; }
+.param-row .val { font-size: 11px; min-width: 48px; text-align: right; font-family: "SF Mono", Menlo, monospace; white-space: nowrap; }
 
-.auto-computed { margin-top: 16px; padding: 12px; background: #f0f8f0; border-radius: 4px; border: 1px solid #d0e8d0; }
-.auto-computed h3 { font-size: 12px; color: #6a6; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
-.auto-computed .val-row { display: flex; justify-content: space-between; font-size: 13px; padding: 2px 0; }
-.auto-computed .val-row .v { font-family: "SF Mono", Menlo, monospace; color: #2a8a4a; }
+.auto-computed { margin-top: 12px; padding: 10px; background: #f0f8f0; border-radius: 4px; border: 1px solid #d0e8d0; }
+.auto-computed h3 { font-size: 11px; color: #6a6; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+.auto-computed .val-row { display: flex; justify-content: space-between; font-size: 11px; padding: 2px 0; gap: 4px; }
+.auto-computed .val-row span:first-child { min-width: 0; }
+.auto-computed .val-row .v { font-family: "SF Mono", Menlo, monospace; color: #2a8a4a; white-space: nowrap; }
 
 .no-selection { color: #aaa; font-size: 13px; padding: 20px 0; text-align: center; }
 

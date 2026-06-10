@@ -15,15 +15,16 @@ const frameChildPoints = {
     'world': [],
     'base': ['base'],
     'pivot': ['pivot'],
-    'rocker': ['arm', 'proximal', 'bar_upper', 'bar_lower'],
+    'rocker': ['arm', 'proximal', 'upright', 'bar_upper', 'bar_lower'],
     'servo_r': ['servo_r', 'link_r'],
     'servo_l': ['servo_l', 'link_l'],
 };
 const pointToElements = {
     'base':      ['base_pivot_line'],
-    'pivot':     ['base_pivot_line', 'pivot_arm_line', 'pivot_proximal_line', 'rot_axis'],
+    'pivot':     ['base_pivot_line', 'pivot_arm_line', 'pivot_proximal_line', 'pivot_upright_line', 'rot_axis'],
     'arm':       ['pivot_arm_line', 'bar_line'],
     'proximal':  ['pivot_proximal_line'],
+    'upright':   ['pivot_upright_line'],
     'bar_upper': ['bar_line', 'link_right_line'],
     'bar_lower': ['bar_line', 'link_left_line'],
     'link_r':    ['link_right_line', 'servo_r_circle'],
