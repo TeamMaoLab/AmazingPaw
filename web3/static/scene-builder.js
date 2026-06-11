@@ -109,6 +109,7 @@ function clearScene() {
 
   for (const m of S.rodMeshes) { S.scene.remove(m); m.geometry.dispose(); m.material.dispose(); }
   S.rodMeshes = [];
+  _ptLabelMap = {};
 
   for (const el of S.annotationEls) el.remove();
   S.annotationEls = [];
@@ -136,6 +137,7 @@ function renderFromPositions(positions) {
 
     // Point label
     const ptLabel = makeLabel('pt-label', step.label, pos);
+    _ptLabelMap[step.name] = ptLabel;
     S.annotationEls.push(ptLabel);
 
     // Line from parent
@@ -225,6 +227,9 @@ function renderFromPositions(positions) {
 
 // ── Fast position update (for animation) ──
 
+// Index: step name → pt-label element (rebuilt on clearScene)
+let _ptLabelMap = {};
+
 export function updatePositions(positions) {
   for (const step of GROWTH) {
     const pos = positions[step.name];
@@ -233,6 +238,10 @@ export function updatePositions(positions) {
     if (!entry) continue;
 
     if (entry.point) entry.point.position.set(...pos);
+
+    // Sync pt-label
+    const label = _ptLabelMap[step.name];
+    if (label) label._pos3 = pos;
 
     if (entry.line && step.parent && positions[step.parent]) {
       if (step.dashed) {
