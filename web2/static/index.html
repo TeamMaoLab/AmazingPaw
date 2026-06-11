@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skeleton Growth Tool</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="header">
+  <h1>Skeleton Growth Tool</h1>
+  <span class="status" id="status">Initializing...</span>
+</div>
+
+<div class="main">
+  <div class="panel-left">
+    <h2>Growth Steps</h2>
+    <div class="step-list" id="step-list"></div>
+    <div class="controls">
+      <button id="btn-reset" title="Reset to full">⟲</button>
+      <button id="btn-play" title="Play growth">▶</button>
+      <button id="btn-next" title="Next step">⏭</button>
+    </div>
+  </div>
+  <div class="viewport" id="viewport">
+    <div class="view-btns">
+      <button data-view="home" title="Reset View">&#8962;</button>
+      <button data-view="+X" class="sep">+X</button>
+      <button data-view="-X">-X</button>
+      <button data-view="+Y" class="sep">+Y</button>
+      <button data-view="-Y">-Y</button>
+      <button data-view="+Z" class="sep">+Z</button>
+      <button data-view="-Z">-Z</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="/static/main.js"></script>
+</body>
+</html>

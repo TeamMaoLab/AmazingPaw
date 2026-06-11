@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rigid Body Viewer</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; color: #333; overflow: hidden; height: 100vh; }
+
+.header {
+    height: 44px; background: #fff; display: flex; align-items: center; padding: 0 16px;
+    border-bottom: 1px solid #ddd;
+}
+.header h1 { font-size: 15px; font-weight: 600; }
+.header .mode-btns { margin-left: auto; display: flex; gap: 6px; }
+.header .btn {
+    padding: 4px 14px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px;
+    background: #fff; color: #666; cursor: pointer; transition: all 0.15s;
+}
+.header .btn:hover { background: #f0f0f0; border-color: #999; }
+.header .btn.active { background: #4488ff; color: #fff; border-color: #4488ff; }
+
+.main { display: flex; height: calc(100vh - 44px); }
+
+/* Left panel */
+.panel-left {
+    width: 220px; min-width: 220px; background: #fff; border-right: 1px solid #ddd;
+    overflow-y: auto; padding: 0;
+}
+.panel-left h2 {
+    font-size: 12px; color: #999; margin: 0; padding: 12px 14px 8px;
+    text-transform: uppercase; letter-spacing: 1px;
+}
+.body-list { list-style: none; padding: 0 8px; }
+.body-list li {
+    display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+    border-radius: 5px; cursor: pointer; font-size: 13px; transition: background 0.12s;
+    border: 2px solid transparent; margin-bottom: 2px;
+}
+.body-list li:hover { background: #f0f0f0; }
+.body-list li.selected { background: #e8f0fe; border-color: #4488ff; color: #1a56a0; }
+.body-list li .color-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+}
+.body-list li .body-name { font-weight: 500; }
+.body-list li .body-label { font-size: 10px; color: #999; margin-left: auto; }
+
+/* Center viewport */
+.viewport { flex: 1; position: relative; overflow: hidden; background: #fff; }
+.viewport canvas { display: block; }
+.viewport .label {
+    position: absolute; color: #333; font-size: 11px; font-weight: 600;
+    pointer-events: none; white-space: nowrap;
+    background: rgba(255,255,255,0.8); padding: 1px 4px; border-radius: 2px;
+}
+.viewport .axis-label {
+    position: absolute; font-size: 12px; font-weight: 700;
+    pointer-events: none; white-space: nowrap;
+}
+.viewport .dist-label {
+    position: absolute; font-size: 10px; color: #666;
+    pointer-events: none; white-space: nowrap;
+    background: rgba(255,255,255,0.75); padding: 1px 4px; border-radius: 2px;
+}
+.viewport .body-label-3d {
+    position: absolute; font-size: 12px; font-weight: 700;
+    pointer-events: none; white-space: nowrap;
+    padding: 2px 6px; border-radius: 3px; background: rgba(255,255,255,0.85);
+    border: 1.5px solid;
+}
+.viewport .joint-label-3d {
+    position: absolute; font-size: 10px; color: #cc2222;
+    pointer-events: none; white-space: nowrap;
+    padding: 1px 4px; border-radius: 2px;
+    background: rgba(255,240,240,0.85); border: 1px solid #fcc;
+}
+
+.view-btns {
+    position: absolute; top: 8px; left: 8px; display: flex; gap: 2px; z-index: 10;
+}
+.view-btns button {
+    width: 28px; height: 24px; font-size: 11px; font-family: "SF Mono", Menlo, monospace;
+    border: 1px solid #ccc; border-radius: 3px; background: rgba(255,255,255,0.9);
+    color: #555; cursor: pointer;
+}
+.view-btns button:hover { background: #e8f0fe; border-color: #4488ff; color: #1a56a0; }
+.view-btns button.sep { margin-left: 4px; }
+
+/* Right panel */
+.panel-right {
+    width: 280px; min-width: 280px; background: #fff; border-left: 1px solid #ddd;
+    overflow-y: auto; padding: 14px;
+}
+.panel-right h2 {
+    font-size: 12px; color: #999; margin: 0 0 8px;
+    text-transform: uppercase; letter-spacing: 1px;
+}
+
+.body-info { margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid #eee; }
+.body-info .info-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.body-info .info-desc { font-size: 12px; color: #888; margin-bottom: 8px; }
+.point-table { width: 100%; font-size: 11px; border-collapse: collapse; }
+.point-table th { text-align: left; color: #999; font-weight: 500; padding: 3px 6px; border-bottom: 1px solid #eee; }
+.point-table td { padding: 3px 6px; font-family: "SF Mono", Menlo, monospace; }
+.point-table tr:nth-child(even) { background: #fafafa; }
+
+.dim-section { margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid #eee; }
+.dim-section h3 { font-size: 11px; color: #6a6; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+.dim-row { display: flex; justify-content: space-between; font-size: 11px; padding: 2px 0; }
+.dim-row .v { font-family: "SF Mono", Menlo, monospace; color: #2a8a4a; white-space: nowrap; }
+
+.param-group { margin-bottom: 12px; }
+.param-group h3 { font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.param-row { display: flex; align-items: center; gap: 6px; margin: 6px 0; }
+.param-row label { font-size: 11px; min-width: 55px; color: #666; white-space: nowrap; }
+.param-row input[type="range"] {
+    flex: 1; height: 4px; -webkit-appearance: none; background: #ddd;
+    border-radius: 2px; outline: none; min-width: 0;
+}
+.param-row input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 14px; height: 14px; background: #4488ff;
+    border-radius: 50%; cursor: pointer;
+}
+.param-row .val {
+    font-size: 11px; min-width: 40px; text-align: right;
+    font-family: "SF Mono", Menlo, monospace; white-space: nowrap;
+}
+
+.no-selection { color: #aaa; font-size: 13px; padding: 20px 0; text-align: center; }
+
+.computed-section { margin-top: 12px; padding: 10px; background: #f0f8f0; border-radius: 4px; border: 1px solid #d0e8d0; }
+.computed-section h3 { font-size: 11px; color: #6a6; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+.computed-section .val-row { display: flex; justify-content: space-between; font-size: 11px; padding: 2px 0; gap: 4px; }
+.computed-section .val-row .v { font-family: "SF Mono", Menlo, monospace; color: #2a8a4a; white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Rigid Body Viewer</h1>
+    <div class="mode-btns">
+        <button class="btn" id="btn-assembly">Assembly View</button>
+    </div>
+</div>
+
+<div class="main">
+    <!-- Left panel: body list -->
+    <div class="panel-left">
+        <h2>Rigid Bodies / 刚体列表</h2>
+        <ul class="body-list" id="body-list"></ul>
+    </div>
+
+    <!-- Center: 3D viewport -->
+    <div class="viewport" id="viewport">
+        <div class="view-btns">
+            <button data-view="home" title="Reset View">&#8962;</button>
+            <button data-view="+X" class="sep" title="View +X">+X</button>
+            <button data-view="-X" title="View -X">-X</button>
+            <button data-view="+Y" class="sep" title="View +Y">+Y</button>
+            <button data-view="-Y" title="View -Y">-Y</button>
+            <button data-view="+Z" class="sep" title="View +Z">+Z</button>
+            <button data-view="-Z" title="View -Z">-Z</button>
+        </div>
+    </div>
+
+    <!-- Right panel: info + params -->
+    <div class="panel-right" id="panel-right">
+        <p class="no-selection">Select a rigid body to view details</p>
+    </div>
+</div>
+
+<script type="module">
+import * as THREE from '/static/lib/three.module.js';
+import { OrbitControls } from '/static/lib/OrbitControls.js';
+
+// ─── Parameters ───
+const params = {
+    z0: 36, L_BP: 10, L_A: 7, L_Q: 10, L_U: 20, L_T: 15, L_B: 14,
+    alpha: 45, gamma: 30,
+    x_e: 11, y_e: 7, z_e: 0, R: 16,
+};
+
+const DEG = Math.PI / 180;
+
+// ─── Rigid body definitions ───
+// Each body: name (English), label (Chinese), color, points in local frame,
+// and how to compute local points from params.
+const BODY_DEFS = [
+    {
+        id: 'base',
+        name: 'Base',
+        label: '基座',
+        color: '#888888',
+        desc: 'Fixed point B in world frame. Single reference point.',
+        getPoints: (p) => ({
+            B: [0, 0, 0],
+        }),
+        bars: [],
+        triangles: [],
+        circles: [],
+    },
+    {
+        id: 'arm',
+        name: 'Arm',
+        label: '摇臂',
+        color: '#4488cc',
+        desc: 'Triangle PAQ + edge RL. Rotates with the subsystem.',
+        getPoints: (p) => {
+            const a = p.alpha * DEG, g = p.gamma * DEG;
+            return {
+                P: [0, 0, 0],
+                A: [p.L_A * Math.sin(a), 0, p.L_A * Math.cos(a)],
+                Q: [p.L_Q * Math.sin(g), 0, p.L_Q * Math.cos(g)],
+                R: [p.L_A * Math.sin(a), p.L_B / 2, p.L_A * Math.cos(a)],
+                L: [p.L_A * Math.sin(a), -p.L_B / 2, p.L_A * Math.cos(a)],
+            };
+        },
+        bars: [['R', 'L']],
+        triangles: [['P', 'A', 'Q']],
+        circles: [],
+    },
+    {
+        id: 'link',
+        name: 'Link',
+        label: '连杆',
+        color: '#44aa66',
+        desc: 'Simple bar from P to U.',
+        getPoints: (p) => ({
+            P: [0, 0, 0],
+            U: [0, 0, p.L_U],
+        }),
+        bars: [['P', 'U']],
+        triangles: [],
+        circles: [],
+    },
+    {
+        id: 'plate',
+        name: 'Plate',
+        label: '平台',
+        color: '#cc6644',
+        desc: 'Triangle QUT forming the platform.',
+        getPoints: (p) => {
+            const g = p.gamma * DEG;
+            return {
+                Q: [p.L_Q * Math.sin(g), 0, p.L_Q * Math.cos(g)],
+                U: [0, 0, p.L_U],
+                T: [0, 0, p.L_U + p.L_T],
+            };
+        },
+        bars: [],
+        triangles: [['Q', 'U', 'T']],
+        circles: [],
+    },
+    {
+        id: 'rod_r',
+        name: 'Rod R',
+        label: '右连杆',
+        color: '#888888',
+        desc: 'Right connecting rod from R to D.',
+        getPoints: (p) => {
+            const L_rod = computeLrod(p);
+            return {
+                R: [0, 0, 0],
+                D: [0, L_rod, 0],
+            };
+        },
+        bars: [['R', 'D']],
+        triangles: [],
+        circles: [],
+    },
+    {
+        id: 'rod_l',
+        name: 'Rod L',
+        label: '左连杆',
+        color: '#888888',
+        desc: 'Left connecting rod from L to F.',
+        getPoints: (p) => {
+            const L_rod = computeLrod(p);
+            return {
+                L: [0, 0, 0],
+                F: [0, L_rod, 0],
+            };
+        },
+        bars: [['L', 'F']],
+        triangles: [],
+        circles: [],
+    },
+    {
+        id: 'servo_r',
+        name: 'Servo R',
+        label: '右舵机',
+        color: '#aa44aa',
+        desc: 'Right servo: horn bar CD + rotation circle at C.',
+        getPoints: (p) => ({
+            C: [0, 0, 0],
+            D: [0, p.R, 0],
+        }),
+        bars: [['C', 'D']],
+        triangles: [],
+        circles: [{ center: 'C', radiusParam: 'R' }],
+    },
+    {
+        id: 'servo_l',
+        name: 'Servo L',
+        label: '左舵机',
+        color: '#aa44aa',
+        desc: 'Left servo: horn bar EF + rotation circle at E.',
+        getPoints: (p) => ({
+            E: [0, 0, 0],
+            F: [0, p.R, 0],
+        }),
+        bars: [['E', 'F']],
+        triangles: [],
+        circles: [{ center: 'E', radiusParam: 'R' }],
+    },
+];
+
+// ─── Computed values ───
+function computeLrod(p) {
+    // In world frame at theta=0:
+    // R_world = P + (L_A*sin(alpha), L_B/2, L_A*cos(alpha))
+    // D_world = C + (0, R, 0) since beta1=0 => (0, R*cos(0), R*sin(0)) = (0, R, 0)
+    // But with theta=0, beta1=0:
+    const a = p.alpha * DEG;
+    const P_world = [p.L_BP, 0, p.z0];
+    const R_world = [P_world[0] + p.L_A * Math.sin(a), p.L_B / 2, P_world[2] + p.L_A * Math.cos(a)];
+    const C_pos = [p.x_e, p.y_e, p.z_e];
+    const D_pos = [C_pos[0], C_pos[1] + p.R, C_pos[2]];
+    return Math.sqrt(
+        (R_world[0] - D_pos[0]) ** 2 +
+        (R_world[1] - D_pos[1]) ** 2 +
+        (R_world[2] - D_pos[2]) ** 2
+    );
+}
+
+function computeTriangleEdges(tri, pts) {
+    const [a, b, c] = tri;
+    const pa = pts[a], pb = pts[b], pc = pts[c];
+    if (!pa || !pb || !pc) return [];
+    return [
+        { from: a, to: b, len: dist3(pa, pb) },
+        { from: b, to: c, len: dist3(pb, pc) },
+        { from: c, to: a, len: dist3(pc, pa) },
+    ];
+}
+
+function dist3(a, b) {
+    return Math.sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2 + (a[2]-b[2])**2);
+}
+
+// ─── World positions (assembly view) ───
+function computeWorldPoints(p) {
+    const a = p.alpha * DEG, g = p.gamma * DEG;
+    // theta = 0, beta1 = 0, beta2 = 0
+    const P_pos = [p.L_BP, 0, p.z0];
+    const B_pos = [0, 0, p.z0];
+    const A = [P_pos[0] + p.L_A * Math.sin(a), 0, P_pos[2] + p.L_A * Math.cos(a)];
+    const Q = [P_pos[0] + p.L_Q * Math.sin(g), 0, P_pos[2] + p.L_Q * Math.cos(g)];
+    const U = [P_pos[0], 0, P_pos[2] + p.L_U];
+    const T = [P_pos[0], 0, P_pos[2] + p.L_U + p.L_T];
+    const R = [A[0], p.L_B / 2, A[2]];
+    const L = [A[0], -p.L_B / 2, A[2]];
+    const C = [p.x_e, p.y_e, p.z_e];
+    const E = [p.x_e, -p.y_e, p.z_e];
+    const D = [C[0], C[1] + p.R, C[2]]; // beta1=0
+    const F = [E[0], E[1] + p.R, E[2]]; // beta2=0
+    return { B: B_pos, P: P_pos, A, Q, U, T, R, L, C, E, D, F };
+}
+
+// ─── Body -> world point mapping for assembly view ───
+// Maps each body ID to the set of world point names it uses
+const BODY_WORLD_MAP = {
+    base: ['B'],
+    arm: ['P', 'A', 'Q', 'R', 'L'],
+    link: ['P', 'U'],
+    plate: ['Q', 'U', 'T'],
+    rod_r: ['R', 'D'],
+    rod_l: ['L', 'F'],
+    servo_r: ['C', 'D'],
+    servo_l: ['E', 'F'],
+};
+
+// ─── Scene setup ───
+const viewport = document.getElementById('viewport');
+let scene, renderer, controls, camera;
+let currentBodyId = null;
+let assemblyMode = false;
+const dynamicObjects = [];  // objects to clear on rebuild
+const labelDivs = [];       // label DOM elements to clear
+
+function initScene() {
+    const w = viewport.clientWidth, h = viewport.clientHeight;
+
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xffffff);
+
+    camera = new THREE.PerspectiveCamera(50, w / h, 0.1, 5000);
+    camera.up.set(0, 0, 1);  // Z is up
+    camera.position.set(30, 30, 25);
+
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(w, h);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    viewport.appendChild(renderer.domElement);
+
+    controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 0, 5);
+    controls.update();
+
+    // Grid on XY plane (Z up)
+    const grid = new THREE.GridHelper(80, 20, 0xe0e0e0, 0xefefef);
+    grid.rotation.x = Math.PI / 2;
+    scene.add(grid);
+
+    window.addEventListener('resize', onResize);
+    animate();
+}
+
+function onResize() {
+    const w = viewport.clientWidth, h = viewport.clientHeight;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    updateAllLabels();
+    renderer.render(scene, camera);
+}
+
+// ─── Label projection ───
+function projectToScreen(pos) {
+    const v = new THREE.Vector3(pos[0], pos[1], pos[2]).project(camera);
+    const rect = renderer.domElement.getBoundingClientRect();
+    return {
+        x: (v.x * 0.5 + 0.5) * rect.width,
+        y: (-v.y * 0.5 + 0.5) * rect.height,
+        visible: v.z < 1,
+    };
+}
+
+function updateAllLabels() {
+    for (const item of labelDivs) {
+        const s = projectToScreen(item.pos);
+        item.div.style.left = (s.x + item.ox) + 'px';
+        item.div.style.top = (s.y + item.oy) + 'px';
+        item.div.style.display = s.visible ? '' : 'none';
+    }
+}
+
+// ─── Clear dynamic scene objects ───
+function clearDynamic() {
+    for (const obj of dynamicObjects) {
+        if (obj.geometry) obj.geometry.dispose();
+        if (obj.material) obj.material.dispose();
+        scene.remove(obj);
+    }
+    dynamicObjects.length = 0;
+    for (const item of labelDivs) item.div.remove();
+    labelDivs.length = 0;
+}
+
+// ─── Drawing helpers ───
+function addSphere(pos, color, radius = 0.6) {
+    const geom = new THREE.SphereGeometry(radius, 16, 16);
+    const mat = new THREE.MeshBasicMaterial({ color: new THREE.Color(color) });
+    const mesh = new THREE.Mesh(geom, mat);
+    mesh.position.set(pos[0], pos[1], pos[2]);
+    scene.add(mesh);
+    dynamicObjects.push(mesh);
+    return mesh;
+}
+
+function addCylinder(p1, p2, color, radius = 0.35) {
+    const dir = new THREE.Vector3(p2[0]-p1[0], p2[1]-p1[1], p2[2]-p1[2]);
+    const len = dir.length();
+    if (len < 0.001) return;
+    const geom = new THREE.CylinderGeometry(radius, radius, len, 12);
+    const mat = new THREE.MeshBasicMaterial({ color: new THREE.Color(color), transparent: true, opacity: 0.7 });
+    const mesh = new THREE.Mesh(geom, mat);
+    mesh.position.set((p1[0]+p2[0])/2, (p1[1]+p2[1])/2, (p1[2]+p2[2])/2);
+    const up = new THREE.Vector3(0, 1, 0);
+    mesh.quaternion.copy(new THREE.Quaternion().setFromUnitVectors(up, dir.normalize()));
+    scene.add(mesh);
+    dynamicObjects.push(mesh);
+}
+
+function addLine(p1, p2, color, opacity = 1.0) {
+    const geom = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(...p1), new THREE.Vector3(...p2)
+    ]);
+    const mat = new THREE.LineBasicMaterial({ color: new THREE.Color(color), transparent: opacity < 1, opacity });
+    const line = new THREE.Line(geom, mat);
+    line.frustumCulled = false;
+    scene.add(line);
+    dynamicObjects.push(line);
+}
+
+function addTriangle(v1, v2, v3, color) {
+    // Filled face
+    const geom = new THREE.BufferGeometry();
+    const verts = new Float32Array([...v1, ...v2, ...v3]);
+    geom.setAttribute('position', new THREE.BufferAttribute(verts, 3));
+    geom.computeVertexNormals();
+    const mat = new THREE.MeshBasicMaterial({
+        color: new THREE.Color(color), transparent: true, opacity: 0.25,
+        side: THREE.DoubleSide, depthWrite: false,
+    });
+    const mesh = new THREE.Mesh(geom, mat);
+    mesh.renderOrder = -1;
+    scene.add(mesh);
+    dynamicObjects.push(mesh);
+
+    // Edge outline
+    const edgeVerts = [...v1, ...v2, ...v3, ...v1];
+    const edgeGeom = new THREE.BufferGeometry();
+    edgeGeom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(edgeVerts), 3));
+    const edgeMat = new THREE.LineBasicMaterial({ color: new THREE.Color(color), transparent: true, opacity: 0.7 });
+    const edgeLine = new THREE.Line(edgeGeom, edgeMat);
+    edgeLine.frustumCulled = false;
+    scene.add(edgeLine);
+    dynamicObjects.push(edgeLine);
+}
+
+function addCircle(center, radius, color, segments = 64) {
+    const pts = [];
+    for (let i = 0; i <= segments; i++) {
+        const a = (i / segments) * Math.PI * 2;
+        pts.push(new THREE.Vector3(center[0], center[1] + radius * Math.cos(a), center[2] + radius * Math.sin(a)));
+    }
+    const geom = new THREE.BufferGeometry().setFromPoints(pts);
+    const mat = new THREE.LineBasicMaterial({ color: new THREE.Color(color), transparent: true, opacity: 0.5 });
+    const line = new THREE.Line(geom, mat);
+    line.frustumCulled = false;
+    scene.add(line);
+    dynamicObjects.push(line);
+}
+
+function addAxisArrows() {
+    const len = 6;
+    const axes = [
+        { dir: [len, 0, 0], color: '#cc3333', label: 'X' },
+        { dir: [0, len, 0], color: '#33aa33', label: 'Y' },
+        { dir: [0, 0, len], color: '#3366cc', label: 'Z' },
+    ];
+    for (const ax of axes) {
+        addLine([0, 0, 0], ax.dir, ax.color, 0.8);
+        // Arrowhead cone
+        const coneLen = 0.6;
+        const coneRad = 0.2;
+        const coneGeom = new THREE.ConeGeometry(coneRad, coneLen, 8);
+        const coneMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(ax.color) });
+        const cone = new THREE.Mesh(coneGeom, coneMat);
+        const d = new THREE.Vector3(...ax.dir).normalize();
+        cone.position.set(ax.dir[0], ax.dir[1], ax.dir[2]);
+        const up = new THREE.Vector3(0, 1, 0);
+        cone.quaternion.copy(new THREE.Quaternion().setFromUnitVectors(up, d));
+        scene.add(cone);
+        dynamicObjects.push(cone);
+        // Label
+        addLabel(ax.dir, ax.label, ax.color, 'axis-label', 6, -8);
+    }
+}
+
+function addLabel(pos, text, color, className, ox = 8, oy = -6) {
+    const div = document.createElement('div');
+    div.className = className;
+    div.textContent = text;
+    if (color) div.style.color = color;
+    viewport.appendChild(div);
+    labelDivs.push({ div, pos, ox, oy });
+}
+
+function addDistLabel(p1, p2, label) {
+    const mid = [(p1[0]+p2[0])/2, (p1[1]+p2[1])/2, (p1[2]+p2[2])/2];
+    addLabel(mid, label, '#666', 'dist-label', 0, -12);
+}
+
+// ─── Single body view ───
+function renderSingleBody(bodyId) {
+    clearDynamic();
+    const def = BODY_DEFS.find(b => b.id === bodyId);
+    if (!def) return;
+
+    const pts = def.getPoints(params);
+
+    // Add axis arrows
+    addAxisArrows();
+
+    // Draw triangles
+    for (const tri of def.triangles) {
+        const v = tri.map(n => pts[n]);
+        if (v.length === 3 && v.every(Boolean)) {
+            addTriangle(v[0], v[1], v[2], def.color);
+            // Distance labels on edges
+            const edges = computeTriangleEdges(tri, pts);
+            for (const e of edges) {
+                addDistLabel(pts[e.from], pts[e.to], e.len.toFixed(2));
+            }
+        }
+    }
+
+    // Draw bars
+    for (const [a, b] of def.bars) {
+        if (pts[a] && pts[b]) {
+            addCylinder(pts[a], pts[b], def.color);
+            const len = dist3(pts[a], pts[b]);
+            addDistLabel(pts[a], pts[b], len.toFixed(2));
+        }
+    }
+
+    // Draw circles (servo)
+    for (const circ of def.circles) {
+        const center = pts[circ.center];
+        if (center) {
+            const radius = params[circ.radiusParam];
+            addCircle(center, radius, def.color);
+        }
+    }
+
+    // Draw points + labels
+    for (const [name, pos] of Object.entries(pts)) {
+        addSphere(pos, def.color, 0.5);
+        addLabel(pos, name, def.color, 'label', 8, -6);
+    }
+
+    // Fit camera
+    fitCamera(pts);
+}
+
+// ─── Assembly view ───
+function renderAssembly() {
+    clearDynamic();
+    const worldPts = computeWorldPoints(params);
+
+    // Draw all bodies in world frame
+    for (const def of BODY_DEFS) {
+        const worldMap = BODY_WORLD_MAP[def.id];
+        if (!worldMap) continue;
+
+        // Get local points and map to world positions
+        const bodyPts = {};
+        for (const ptName of worldMap) {
+            if (worldPts[ptName]) bodyPts[ptName] = worldPts[ptName];
+        }
+
+        // Triangles
+        for (const tri of def.triangles) {
+            const v = tri.map(n => bodyPts[n]);
+            if (v.length === 3 && v.every(Boolean)) {
+                addTriangle(v[0], v[1], v[2], def.color);
+            }
+        }
+
+        // Bars
+        for (const [a, b] of def.bars) {
+            if (bodyPts[a] && bodyPts[b]) {
+                addCylinder(bodyPts[a], bodyPts[b], def.color, 0.4);
+            }
+        }
+
+        // Circles
+        for (const circ of def.circles) {
+            const center = bodyPts[circ.center];
+            if (center) {
+                addCircle(center, params[circ.radiusParam], def.color);
+            }
+        }
+
+        // Points
+        for (const [name, pos] of Object.entries(bodyPts)) {
+            addSphere(pos, def.color, 0.5);
+        }
+
+        // Body label at centroid
+        const allCoords = Object.values(bodyPts);
+        if (allCoords.length > 0) {
+            const cx = allCoords.reduce((s, c) => s + c[0], 0) / allCoords.length;
+            const cy = allCoords.reduce((s, c) => s + c[1], 0) / allCoords.length;
+            const cz = allCoords.reduce((s, c) => s + c[2], 0) / allCoords.length;
+            const div = document.createElement('div');
+            div.className = 'body-label-3d';
+            div.textContent = def.label;
+            div.style.color = def.color;
+            div.style.borderColor = def.color;
+            viewport.appendChild(div);
+            labelDivs.push({ div, pos: [cx, cy, cz], ox: 10, oy: -8 });
+        }
+    }
+
+    // Highlight joint points (shared between bodies)
+    const jointPointNames = ['P', 'Q', 'U', 'R', 'L', 'D', 'F'];
+    for (const jn of jointPointNames) {
+        if (worldPts[jn]) {
+            addSphere(worldPts[jn], '#22aacc', 0.8);
+            addLabel(worldPts[jn], jn, '#22aacc', 'label', 8, -14);
+        }
+    }
+
+    // World axis
+    const axLen = 10;
+    addLine([0,0,0], [axLen,0,0], '#cc3333', 0.6);
+    addLine([0,0,0], [0,axLen,0], '#33aa33', 0.6);
+    addLine([0,0,0], [0,0,axLen], '#3366cc', 0.6);
+    addLabel([axLen,0,0], 'X', '#cc3333', 'axis-label', 4, -6);
+    addLabel([0,axLen,0], 'Y', '#33aa33', 'axis-label', 4, -6);
+    addLabel([0,0,axLen], 'Z', '#3366cc', 'axis-label', 4, -6);
+
+    // Point labels for important fixed points
+    for (const [name, pos] of Object.entries(worldPts)) {
+        if (!jointPointNames.includes(name)) {
+            addLabel(pos, name, '#555', 'label', 6, 6);
+        }
+    }
+
+    // Fit camera to whole assembly
+    fitCamera(worldPts);
+}
+
+function fitCamera(pts) {
+    const positions = Object.values(pts);
+    if (positions.length === 0) return;
+    let minX = Infinity, minY = Infinity, minZ = Infinity;
+    let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+    for (const p of positions) {
+        minX = Math.min(minX, p[0]); maxX = Math.max(maxX, p[0]);
+        minY = Math.min(minY, p[1]); maxY = Math.max(maxY, p[1]);
+        minZ = Math.min(minZ, p[2]); maxZ = Math.max(maxZ, p[2]);
+    }
+    const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2, cz = (minZ + maxZ) / 2;
+    const dx = maxX - minX, dy = maxY - minY, dz = maxZ - minZ;
+    const size = Math.max(dx, dy, dz, 5);
+    const dist = size * 2.5;
+    controls.target.set(cx, cy, cz);
+    camera.position.set(cx + dist * 0.6, cy + dist * 0.6, cz + dist * 0.5);
+    controls.update();
+}
+
+// ─── Right panel ───
+function renderRightPanel(bodyId) {
+    const panel = document.getElementById('panel-right');
+    const def = BODY_DEFS.find(b => b.id === bodyId);
+    if (!def) {
+        panel.innerHTML = '<p class="no-selection">Select a rigid body to view details</p>';
+        return;
+    }
+
+    const pts = def.getPoints(params);
+    const L_rod = computeLrod(params);
+
+    let html = '';
+
+    // Body info
+    html += `<div class="body-info">`;
+    html += `<div class="info-title">${def.name} / ${def.label}</div>`;
+    html += `<div class="info-desc">${def.desc}</div>`;
+
+    // Points table
+    html += `<table class="point-table"><tr><th>Point</th><th>X</th><th>Y</th><th>Z</th></tr>`;
+    for (const [name, pos] of Object.entries(pts)) {
+        html += `<tr><td>${name}</td><td>${pos[0].toFixed(2)}</td><td>${pos[1].toFixed(2)}</td><td>${pos[2].toFixed(2)}</td></tr>`;
+    }
+    html += `</table></div>`;
+
+    // Dimensions / distances
+    html += `<div class="dim-section"><h3>Dimensions / 尺寸</h3>`;
+    for (const [a, b] of def.bars) {
+        if (pts[a] && pts[b]) {
+            const len = dist3(pts[a], pts[b]);
+            html += `<div class="dim-row"><span>${a}${b} length</span><span class="v">${len.toFixed(3)}</span></div>`;
+        }
+    }
+    for (const tri of def.triangles) {
+        const edges = computeTriangleEdges(tri, pts);
+        for (const e of edges) {
+            html += `<div class="dim-row"><span>${e.from}${e.to}</span><span class="v">${e.len.toFixed(3)}</span></div>`;
+        }
+    }
+    for (const circ of def.circles) {
+        html += `<div class="dim-row"><span>Circle R</span><span class="v">${params[circ.radiusParam].toFixed(1)}</span></div>`;
+    }
+    html += `</div>`;
+
+    // Parameter sliders
+    html += `<div class="param-group"><h3>Parameters / 参数</h3>`;
+    const sliderParams = [
+        { key: 'L_A', label: 'L_A', min: 2, max: 20, step: 0.5 },
+        { key: 'L_Q', label: 'L_Q', min: 2, max: 20, step: 0.5 },
+        { key: 'L_U', label: 'L_U', min: 5, max: 40, step: 0.5 },
+        { key: 'L_T', label: 'L_T', min: 5, max: 40, step: 0.5 },
+        { key: 'L_B', label: 'L_B', min: 4, max: 30, step: 0.5 },
+        { key: 'alpha', label: 'α (°)', min: 5, max: 85, step: 1 },
+        { key: 'gamma', label: 'γ (°)', min: 5, max: 85, step: 1 },
+        { key: 'R', label: 'R', min: 5, max: 30, step: 0.5 },
+    ];
+    for (const sp of sliderParams) {
+        html += `<div class="param-row">
+            <label>${sp.label}</label>
+            <input type="range" min="${sp.min}" max="${sp.max}" step="${sp.step}" value="${params[sp.key]}" data-param="${sp.key}">
+            <span class="val">${params[sp.key]}</span>
+        </div>`;
+    }
+    html += `</div>`;
+
+    // Computed values
+    html += `<div class="computed-section"><h3>Computed / 计算值</h3>`;
+    html += `<div class="val-row"><span>L_rod</span><span class="v">${L_rod.toFixed(3)}</span></div>`;
+    // Triangle area for relevant bodies
+    for (const tri of def.triangles) {
+        const v = tri.map(n => pts[n]);
+        if (v.length === 3 && v.every(Boolean)) {
+            const area = triangleArea(v[0], v[1], v[2]);
+            html += `<div class="val-row"><span>${tri.join('')} area</span><span class="v">${area.toFixed(3)}</span></div>`;
+        }
+    }
+    html += `</div>`;
+
+    panel.innerHTML = html;
+
+    // Attach slider events
+    panel.querySelectorAll('input[type="range"]').forEach(input => {
+        input.addEventListener('input', (e) => {
+            const key = e.target.dataset.param;
+            params[key] = parseFloat(e.target.value);
+            e.target.nextElementSibling.textContent = params[key];
+            refresh();
+        });
+    });
+}
+
+function triangleArea(a, b, c) {
+    const ab = [b[0]-a[0], b[1]-a[1], b[2]-a[2]];
+    const ac = [c[0]-a[0], c[1]-a[1], c[2]-a[2]];
+    const cross = [
+        ab[1]*ac[2] - ab[2]*ac[1],
+        ab[2]*ac[0] - ab[0]*ac[2],
+        ab[0]*ac[1] - ab[1]*ac[0],
+    ];
+    return 0.5 * Math.sqrt(cross[0]**2 + cross[1]**2 + cross[2]**2);
+}
+
+// ─── Refresh view ───
+function refresh() {
+    if (assemblyMode) {
+        renderAssembly();
+    } else if (currentBodyId) {
+        renderSingleBody(currentBodyId);
+        renderRightPanel(currentBodyId);
+    }
+}
+
+// ─── Build body list ───
+function buildBodyList() {
+    const ul = document.getElementById('body-list');
+    for (const def of BODY_DEFS) {
+        const li = document.createElement('li');
+        li.dataset.id = def.id;
+        li.innerHTML = `<span class="color-dot" style="background:${def.color}"></span>
+            <span class="body-name">${def.name}</span>
+            <span class="body-label">${def.label}</span>`;
+        li.addEventListener('click', () => selectBody(def.id));
+        ul.appendChild(li);
+    }
+}
+
+function selectBody(bodyId) {
+    if (assemblyMode) {
+        assemblyMode = false;
+        document.getElementById('btn-assembly').classList.remove('active');
+    }
+    currentBodyId = bodyId;
+    // Update list selection
+    document.querySelectorAll('.body-list li').forEach(li => {
+        li.classList.toggle('selected', li.dataset.id === bodyId);
+    });
+    renderSingleBody(bodyId);
+    renderRightPanel(bodyId);
+}
+
+// ─── Assembly toggle ───
+document.getElementById('btn-assembly').addEventListener('click', () => {
+    assemblyMode = !assemblyMode;
+    const btn = document.getElementById('btn-assembly');
+    btn.classList.toggle('active', assemblyMode);
+    if (assemblyMode) {
+        currentBodyId = null;
+        document.querySelectorAll('.body-list li').forEach(li => li.classList.remove('selected'));
+        renderAssembly();
+        renderAssemblyPanel();
+    } else {
+        // Show last selected or first body
+        if (!currentBodyId) selectBody(BODY_DEFS[0].id);
+    }
+});
+
+function renderAssemblyPanel() {
+    const panel = document.getElementById('panel-right');
+    const L_rod = computeLrod(params);
+    const worldPts = computeWorldPoints(params);
+
+    let html = `<div class="body-info">
+        <div class="info-title">Assembly View / 装配视图</div>
+        <div class="info-desc">All rigid bodies shown in world coordinates (theta=0, beta1=0, beta2=0). Joint points highlighted in cyan.</div>
+    </div>`;
+
+    // Key distances
+    html += `<div class="dim-section"><h3>Key Distances / 关键距离</h3>`;
+    html += `<div class="dim-row"><span>L_rod (R-D)</span><span class="v">${L_rod.toFixed(3)}</span></div>`;
+    html += `<div class="dim-row"><span>B-P</span><span class="v">${dist3(worldPts.B, worldPts.P).toFixed(3)}</span></div>`;
+    html += `<div class="dim-row"><span>P-A</span><span class="v">${dist3(worldPts.P, worldPts.A).toFixed(3)}</span></div>`;
+    html += `<div class="dim-row"><span>P-Q</span><span class="v">${dist3(worldPts.P, worldPts.Q).toFixed(3)}</span></div>`;
+    html += `<div class="dim-row"><span>P-U</span><span class="v">${dist3(worldPts.P, worldPts.U).toFixed(3)}</span></div>`;
+    html += `<div class="dim-row"><span>U-T</span><span class="v">${dist3(worldPts.U, worldPts.T).toFixed(3)}</span></div>`;
+    html += `<div class="dim-row"><span>R-L</span><span class="v">${dist3(worldPts.R, worldPts.L).toFixed(3)}</span></div>`;
+    html += `</div>`;
+
+    // Parameter sliders
+    html += `<div class="param-group"><h3>Parameters / 参数</h3>`;
+    const sliderParams = [
+        { key: 'L_A', label: 'L_A', min: 2, max: 20, step: 0.5 },
+        { key: 'L_Q', label: 'L_Q', min: 2, max: 20, step: 0.5 },
+        { key: 'L_U', label: 'L_U', min: 5, max: 40, step: 0.5 },
+        { key: 'L_T', label: 'L_T', min: 5, max: 40, step: 0.5 },
+        { key: 'L_B', label: 'L_B', min: 4, max: 30, step: 0.5 },
+        { key: 'alpha', label: 'α (°)', min: 5, max: 85, step: 1 },
+        { key: 'gamma', label: 'γ (°)', min: 5, max: 85, step: 1 },
+        { key: 'R', label: 'R', min: 5, max: 30, step: 0.5 },
+    ];
+    for (const sp of sliderParams) {
+        html += `<div class="param-row">
+            <label>${sp.label}</label>
+            <input type="range" min="${sp.min}" max="${sp.max}" step="${sp.step}" value="${params[sp.key]}" data-param="${sp.key}">
+            <span class="val">${params[sp.key]}</span>
+        </div>`;
+    }
+    html += `</div>`;
+
+    html += `<div class="computed-section"><h3>Computed / 计算值</h3>`;
+    html += `<div class="val-row"><span>L_rod</span><span class="v">${L_rod.toFixed(3)}</span></div>`;
+    html += `</div>`;
+
+    panel.innerHTML = html;
+
+    panel.querySelectorAll('input[type="range"]').forEach(input => {
+        input.addEventListener('input', (e) => {
+            const key = e.target.dataset.param;
+            params[key] = parseFloat(e.target.value);
+            e.target.nextElementSibling.textContent = params[key];
+            refresh();
+            renderAssemblyPanel();
+        });
+    });
+}
+
+// ─── View buttons ───
+document.querySelectorAll('.view-btns button[data-view]').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const v = btn.dataset.view;
+        if (v === 'home') {
+            if (assemblyMode) {
+                fitCamera(computeWorldPoints(params));
+            } else if (currentBodyId) {
+                const def = BODY_DEFS.find(b => b.id === currentBodyId);
+                if (def) fitCamera(def.getPoints(params));
+            }
+            return;
+        }
+        const axis = v[1].toLowerCase();
+        const sign = v[0] === '+' ? 1 : -1;
+        const dist = 50;
+        const target = controls.target.clone();
+        const pos = target.clone();
+        if (axis === 'x') { pos.x += sign * dist; camera.up.set(0, 0, 1); }
+        if (axis === 'y') { pos.y += sign * dist; camera.up.set(0, 0, 1); }
+        if (axis === 'z') { pos.z += sign * dist; camera.up.set(0, sign, 0); }
+        camera.position.copy(pos);
+        controls.update();
+    });
+});
+
+// ─── Init ───
+buildBodyList();
+initScene();
+// Select first body by default
+selectBody('arm');
+
+</script>
+</body>
+</html>

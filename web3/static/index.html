@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parametric Skeleton Sketch</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="header">
+  <h1>Parametric Skeleton</h1>
+  <span class="status" id="status">Ready</span>
+</div>
+<div class="main">
+  <div class="viewport" id="viewport">
+    <div class="view-btns">
+      <button data-view="home" title="Reset View">&#8962;</button>
+      <button data-view="+X" class="sep">+X</button>
+      <button data-view="-X">-X</button>
+      <button data-view="+Y" class="sep">+Y</button>
+      <button data-view="-Y">-Y</button>
+      <button data-view="+Z" class="sep">+Z</button>
+      <button data-view="-Z">-Z</button>
+    </div>
+    <div class="growth-tree" id="growth-tree"></div>
+  </div>
+</div>
+<script type="module" src="/static/main.js"></script>
+</body>
+</html>
