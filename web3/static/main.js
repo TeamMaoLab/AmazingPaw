@@ -16,7 +16,7 @@ const GROWTH = [
     build: () => ({ pos: [0, 0, 0] }),
   },
   {
-    name: 'servo', parent: 'Origin', label: 'S',
+    name: 'servo', parent: 'Origin', label: 'S', noLine: true,
     params: { x_e: { default: 11, min: 0, max: 60, step: 0.5, unit: 'mm' } },
     annotations: [{ type: 'dim', param: 'x_e', from: 'Origin', to: 'servo' }],
     build: (p) => ({
@@ -70,7 +70,7 @@ const GROWTH = [
     },
   },
   {
-    name: 'finger_base', parent: 'Origin', label: 'B',
+    name: 'finger_base', parent: 'Origin', label: 'B', noLine: true,
     params: { z0: { default: 36, min: 0, max: 100, step: 0.5, unit: 'mm' } },
     annotations: [{ type: 'dim', param: 'z0', from: 'Origin', to: 'finger_base' }],
     build: (p) => ({ pos: [0, 0, p.z0] }),
@@ -175,13 +175,39 @@ let annotationEls = [];
 let showAnnotations = true;
 
 const RODS = [
-  ['link_joint', 'plate_end'],  // U → K
-  ['arm_ext', 'plate_end'],     // Q → K
-  ['bar_l', 'servo_arm_l'],     // L → F
-  ['bar_r', 'servo_arm_r'],     // R → D
+  { from: 'link_joint', to: 'plate_end', body: 'UQK' },
+  { from: 'arm_ext', to: 'plate_end', body: 'UQK' },
+  { from: 'bar_l', to: 'servo_arm_l', body: 'LF' },
+  { from: 'bar_r', to: 'servo_arm_r', body: 'RD' },
 ];
-const ROD_COLOR = 0x44aa88;
 const ROD_R = 0.3;
+
+// Rigid body colors
+const BODY_COLORS = {
+  APB:  0xe74c3c,
+  QP:   0x3498db,
+  UQK:  0x27ae60,
+  KATLR: 0xf39c12,
+  LF:   0x8e44ad,
+  RD:   0x16a085,
+  CD:   0xd35400,
+  EF:   0xe84393,
+};
+
+// Map growth step → rigid body (for line/point coloring)
+const STEP_BODY = {
+  finger_base: 'APB',
+  pivot: 'APB',
+  arm_end: 'APB',
+  arm_ext: 'QP',
+  link_joint: 'UQK',
+  tip: 'KATLR',
+  plate_end: 'KATLR',
+  bar_r: 'KATLR',
+  bar_l: 'KATLR',
+  servo_arm_r: 'CD',
+  servo_arm_l: 'EF',
+};
 
 function initScene() {
   containerEl = document.getElementById('viewport');
@@ -271,8 +297,9 @@ function rebuildScene() {
     const entry = {};
 
     // Point (sphere)
+    const body = STEP_BODY[step.name];
     const ptGeo = new THREE.SphereGeometry(PT_R, 16, 16);
-    const ptColor = step.parent === null ? 0x333333 : 0x4488ff;
+    const ptColor = body ? BODY_COLORS[body] : (step.parent === null ? 0x333333 : 0x999999);
     entry.point = new THREE.Mesh(ptGeo, new THREE.MeshBasicMaterial({ color: ptColor }));
     entry.point.position.set(...result.pos);
     scene.add(entry.point);
@@ -282,11 +309,14 @@ function rebuildScene() {
     annotationEls.push(ptLabel);
 
     // Line from parent: dashed or solid
-    if (step.parent) {
+    if (step.parent && !step.noLine) {
+      const lineBody = STEP_BODY[step.name];
       if (step.dashed) {
         entry.line = makeDashedLine(positions[step.parent], result.pos, 0xaa8844);
+      } else if (lineBody) {
+        entry.line = makeCylinder(positions[step.parent], result.pos, LINE_R, BODY_COLORS[lineBody]);
       } else {
-        entry.line = makeCylinder(positions[step.parent], result.pos, LINE_R, 0x888888);
+        entry.line = makeCylinder(positions[step.parent], result.pos, LINE_R, 0x999999);
       }
       scene.add(entry.line);
     }
@@ -348,11 +378,11 @@ function rebuildScene() {
 
   // ── Passive connecting rods ──
   rodMeshes = [];
-  for (const [fromName, toName] of RODS) {
-    if (positions[fromName] && positions[toName]) {
-      const rod = makeCylinder(positions[fromName], positions[toName], ROD_R, ROD_COLOR);
-      scene.add(rod);
-      rodMeshes.push(rod);
+  for (const r of RODS) {
+    if (positions[r.from] && positions[r.to]) {
+      const mesh = makeCylinder(positions[r.from], positions[r.to], ROD_R, BODY_COLORS[r.body]);
+      scene.add(mesh);
+      rodMeshes.push(mesh);
     }
   }
 
@@ -873,18 +903,22 @@ function applyHighlight() {
     const m = meshes[step.name];
     if (!m) continue;
     const isSelected = step.name === selectedName;
+    const body = STEP_BODY[step.name];
+    const defaultPtColor = body ? BODY_COLORS[body] : (step.parent === null ? 0x333333 : 0x999999);
+    const defaultLineColor = body ? BODY_COLORS[body] : (step.dashed ? 0xaa8844 : 0x999999);
     // Highlight point
     if (m.point) {
       m.point.material.opacity = selectedName === null ? 1.0 : (isSelected ? 1.0 : 0.2);
       m.point.material.transparent = selectedName !== null;
       m.point.scale.setScalar(isSelected ? 2.0 : 1.0);
+      m.point.material.color.set(isSelected ? 0xff8844 : defaultPtColor);
     }
     // Highlight line
     if (m.line) {
       m.line.material.opacity = selectedName === null ? 1.0 : (isSelected ? 1.0 : 0.15);
       m.line.material.transparent = true;
       if (isSelected) m.line.material.color.set(0xff8844);
-      else m.line.material.color.set(0x888888);
+      else m.line.material.color.set(defaultLineColor);
     }
   }
 }
@@ -1015,15 +1049,16 @@ function updateRodLengths(positions) {
   const el = document.getElementById('rod-lengths');
   if (!el) return;
   el.innerHTML = '';
-  for (const [from, to] of RODS) {
-    if (!positions[from] || !positions[to]) continue;
-    const dx = positions[to][0] - positions[from][0];
-    const dy = positions[to][1] - positions[from][1];
-    const dz = positions[to][2] - positions[from][2];
+  for (const r of RODS) {
+    if (!positions[r.from] || !positions[r.to]) continue;
+    const dx = positions[r.to][0] - positions[r.from][0];
+    const dy = positions[r.to][1] - positions[r.from][1];
+    const dz = positions[r.to][2] - positions[r.from][2];
     const len = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    const hex = '#' + new THREE.Color(BODY_COLORS[r.body]).getHexString();
     const row = document.createElement('div');
     row.className = 'rod-row';
-    row.innerHTML = `<span class="rod-dot"></span><span class="rod-name">${getLabelFor(from)}→${getLabelFor(to)}</span><span class="rod-val">${len.toFixed(1)}mm</span>`;
+    row.innerHTML = `<span class="rod-dot" style="background:${hex}"></span><span class="rod-name" style="color:${hex}">${getLabelFor(r.from)}→${getLabelFor(r.to)}</span><span class="rod-val">${len.toFixed(1)}mm</span>`;
     el.appendChild(row);
   }
 }
