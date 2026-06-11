@@ -32,19 +32,31 @@ jupyter notebook notebook/finger_build.ipynb
 - Modular architecture: 7 JS modules (state, defs, geometry, ui, annotations, scene-builder, main)
 - **Branch**: `refactor/modular-split` (ready to merge into master)
 
-### Phase 3 — Rigid body math model + KaTeX drawer (current)
+### Phase 3 — Rigid body math model + KaTeX drawer (completed)
 - `docs/rigid_body_math_model.md` — 8-body decomposition, constraint equations, Jacobian, DOF analysis
 - KaTeX-rendered math panel: right-half slide-out drawer, viewport shrinks to left 50%
 - SVG topology diagram with color-coded bodies and joint types
 - Joint analysis: 1 global rotation (AB axis, ∥X) + 4 local Y rotations (four-bar) + 4 spherical + 2 servo
 
-### Phase 4 — Solver + parameter visualization (next)
-- Implement Newton-Raphson solver for (θ, ∠KAP) given (β₁, β₂)
-- Parameter space visualization matrix (like web2's grid):
-  - Rows/columns: different parameter pairs (β₁ vs β₂, θ vs ∠KAP, etc.)
-  - Cells: 2D contour plots of constraint residual or mechanism pose
-- Real-time mechanism animation: drag servo angles, see finger move
-- Compare with Phase 1 solver results for validation
+### Phase 4 — Solver + parameter visualization (completed)
+- Newton-Raphson solver for (θ, φ) given (β₁, β₂)
+  - Passive variables: θ (AB-axis rotation), φ (QP angle from +Z at P)
+  - Numerical Jacobian (ε = 0.001°), convergence tol = 1e-4, max 50 iterations
+  - Physical validity filters: QP-AK segment intersection, K above base, theta continuity (<45°)
+  - U branch selection via cross-product sign (prevents jump at φ≈50°)
+- Three mode system: Design / Kinematic / Grid
+  - **Design**: growth tree + annotations, parameter editing
+  - **Kinematic**: beta sliders + real-time solve, animation sweep
+  - **Grid**: BFS-based β₁×β₂ heatmap, seeded from design config
+- Rod length stability: design betas saved/restored on mode switch
+- Grid coordinate: (0°, 0°) at bottom-left, diagonal for symmetric operation
+- FastAPI server with /api/params persistence, Save Params button
+- Launch: `uv run web3/server.py` → http://localhost:8002/static/index.html
+
+### Phase 5 — Mechanical design integration (next)
+- Export mechanism geometry for CAD/manufacturing
+- Tolerance analysis: parameter sensitivity of workspace
+- Compare solver results with Phase 1 for validation
 
 ## Active tool: web3
 
@@ -54,17 +66,22 @@ Single-page app, no build tools. Modular ES modules:
 
 | Module | Responsibility |
 |--------|---------------|
-| `main.js` | Thin orchestrator (~10 lines) |
+| `main.js` | Async init: load saved params, bind save button |
 | `state.js` | Shared mutable state object S, rebuild callback |
-| `defs.js` | Growth definitions, parameters, rigid body data (pure data, no THREE) |
+| `defs.js` | Growth definitions, parameters, load/save params API |
 | `geometry.js` | Stateless THREE.js geometry factories |
 | `ui.js` | Selection, hover highlighting, growth tree, view controls |
 | `annotations.js` | CAD-style dim/angle/radius annotations, KaTeX rendering |
-| `scene-builder.js` | Three.js scene lifecycle, rebuild logic |
+| `scene-builder.js` | Three.js scene lifecycle, rebuild logic, updatePositions |
+| `solver.js` | Newton-Raphson solver, forwardPositions, grid computation |
+| `mode-manager.js` | Design/Kinematic/Grid mode switching, rod length inheritance |
+| `kinematic-ui.js` | Beta sliders, animation sweep controls |
+| `grid-mode.js` | β₁×β₂ heatmap rendering, pointer interaction |
 | `math-drawer.js` | Right-half KaTeX panel with SVG topology diagram |
 | `style.css` | Layout + drawer transition + annotation styles |
-| `index.html` | Page structure, KaTeX CDN, MATH/DIM toggle buttons |
+| `index.html` | Page structure, mode tabs, save button, KaTeX CDN |
 | `lib/` | Three.js r170 + OrbitControls (vendored) |
+| `server.py` | FastAPI: static files + /api/params GET/POST |
 
 ### Current skeleton (growth order)
 
