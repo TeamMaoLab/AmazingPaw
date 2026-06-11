@@ -161,19 +161,91 @@ const SECTIONS = [
       { type: 'p', text: '闭环 3 — 左驱动链 E→F→L→KATLR→APB→Ground' },
 
       { type: 'h3', text: '3.3 拓扑图' },
-      { type: 'pre', text:
-`Ground (O, B, C, E 固定)
-  │
-  ├──[Rev AB, θ]── APB (B, P, A)
-  │     │              │
-  │     ├─[Rev]─ QP    └─[Rev]─ KATLR
-  │     │          │              │    │
-  │     │          └─[Rev]─ UQK──┘    │
-  │     │                     │        │
-  │     │              [Sph]  [Sph]    │
-  │     │               RD     LF      │
-  │     │              [Sph]  [Sph]    │
-  ├──[Rev β₁]── CD(D)  EF(F) ──[Rev β₂]` },
+      { type: 'raw', html: `
+<svg viewBox="0 0 460 310" width="100%" style="font-family:'SF Mono',Menlo,monospace;font-size:11px;">
+  <defs>
+    <marker id="ah" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
+      <path d="M0,0 L6,2 L0,4" fill="#4488ff"/>
+    </marker>
+  </defs>
+  <!-- Ground bar -->
+  <rect x="30" y="8" width="400" height="28" rx="4" fill="#f0f0f0" stroke="#999" stroke-width="1.5"/>
+  <text x="230" y="27" text-anchor="middle" fill="#555" font-weight="600">Ground (O, B, C, E)</text>
+
+  <!-- === Edges (drawn first, behind nodes) === -->
+  <!-- Revolute joints (solid blue) -->
+  <line x1="120" y1="36" x2="120" y2="80" stroke="#4488ff" stroke-width="1.8"/>
+  <text x="75" y="62" fill="#4488ff" font-size="9" font-weight="600">Rev AB, θ</text>
+
+  <line x1="320" y1="36" x2="320" y2="80" stroke="#e67e22" stroke-width="1.8"/>
+  <text x="325" y="62" fill="#e67e22" font-size="9" font-weight="600">Rev β₁</text>
+
+  <line x1="420" y1="36" x2="420" y2="80" stroke="#e67e22" stroke-width="1.8"/>
+  <text x="425" y="62" fill="#e67e22" font-size="9" font-weight="600">Rev β₂</text>
+
+  <!-- Four-bar loop edges (solid blue) -->
+  <line x1="95" y1="110" x2="55" y2="165" stroke="#4488ff" stroke-width="1.8"/>
+  <text x="42" y="142" fill="#4488ff" font-size="9">Rev Y, P</text>
+
+  <line x1="150" y1="110" x2="195" y2="165" stroke="#4488ff" stroke-width="1.8"/>
+  <text x="155" y="138" fill="#4488ff" font-size="9">Rev Y, A</text>
+
+  <line x1="65" y1="195" x2="115" y2="248" stroke="#4488ff" stroke-width="1.8"/>
+  <text x="42" y="225" fill="#4488ff" font-size="9">Rev Y, Q</text>
+
+  <!-- Loop edge: UQK→KATLR (highlighted) -->
+  <line x1="160" y1="255" x2="185" y2="195" stroke="#4488ff" stroke-width="1.8" stroke-dasharray="none"/>
+  <text x="162" y="235" fill="#4488ff" font-size="9">Rev Y, K</text>
+
+  <!-- Spherical joints (dashed green) -->
+  <line x1="260" y1="190" x2="295" y2="248" stroke="#27ae60" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="255" y="225" fill="#27ae60" font-size="9">Sph, R</text>
+
+  <line x1="280" y1="190" x2="385" y2="248" stroke="#27ae60" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="345" y="215" fill="#27ae60" font-size="9">Sph, L</text>
+
+  <line x1="310" y1="110" x2="300" y2="248" stroke="#27ae60" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="280" y="185" fill="#27ae60" font-size="9">Sph, D</text>
+
+  <line x1="420" y1="110" x2="400" y2="248" stroke="#27ae60" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="408" y="185" fill="#27ae60" font-size="9">Sph, F</text>
+
+  <!-- === Nodes === -->
+  <!-- APB -->
+  <rect x="70" y="80" width="100" height="30" rx="4" fill="#e8f0fe" stroke="#4488ff" stroke-width="1.5"/>
+  <text x="120" y="99" text-anchor="middle" fill="#333" font-weight="600">APB</text>
+
+  <!-- QP -->
+  <rect x="15" y="165" width="80" height="30" rx="4" fill="#e8f0fe" stroke="#4488ff" stroke-width="1.5"/>
+  <text x="55" y="184" text-anchor="middle" fill="#333" font-weight="600">QP</text>
+
+  <!-- KATLR -->
+  <rect x="175" y="165" width="110" height="30" rx="4" fill="#e8f0fe" stroke="#4488ff" stroke-width="1.5"/>
+  <text x="230" y="184" text-anchor="middle" fill="#333" font-weight="600">KATLR</text>
+
+  <!-- UQK -->
+  <rect x="90" y="248" width="80" height="30" rx="4" fill="#e8f0fe" stroke="#4488ff" stroke-width="1.5"/>
+  <text x="130" y="267" text-anchor="middle" fill="#333" font-weight="600">UQK</text>
+
+  <!-- CD -->
+  <rect x="280" y="80" width="80" height="30" rx="4" fill="#fff3e0" stroke="#e67e22" stroke-width="1.5"/>
+  <text x="320" y="99" text-anchor="middle" fill="#333" font-weight="600">CD</text>
+
+  <!-- EF -->
+  <rect x="380" y="80" width="75" height="30" rx="4" fill="#fff3e0" stroke="#e67e22" stroke-width="1.5"/>
+  <text x="418" y="99" text-anchor="middle" fill="#333" font-weight="600">EF</text>
+
+  <!-- RD -->
+  <rect x="270" y="248" width="60" height="30" rx="4" fill="#f3e5f5" stroke="#9b59b6" stroke-width="1.5"/>
+  <text x="300" y="267" text-anchor="middle" fill="#333" font-weight="600">RD</text>
+
+  <!-- LF -->
+  <rect x="370" y="248" width="55" height="30" rx="4" fill="#f3e5f5" stroke="#9b59b6" stroke-width="1.5"/>
+  <text x="398" y="267" text-anchor="middle" fill="#333" font-weight="600">LF</text>
+
+  <!-- Loop indicator -->
+  <text x="230" y="305" text-anchor="middle" fill="#888" font-size="9" font-style="italic">四连杆闭环: APB → QP → UQK → KATLR → APB</text>
+</svg>` },
     ],
   },
   {
@@ -396,6 +468,11 @@ function buildBlock(block) {
     case 'pre': {
       const el = document.createElement('pre');
       el.textContent = block.text;
+      return el;
+    }
+    case 'raw': {
+      const el = document.createElement('div');
+      el.innerHTML = block.html;
       return el;
     }
     default: {
