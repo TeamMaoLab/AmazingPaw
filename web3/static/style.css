@@ -73,7 +73,7 @@ body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: #
   font-size: 12px; line-height: 1.8;
 }
 .tree-node { display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 1px 4px; border-radius: 3px; transition: background 0.12s; }
-.tree-node:hover { background: rgba(68,136,255,0.15); }
+.tree-node:hover, .tree-node.hover { background: rgba(68,136,255,0.15); }
 .tree-node.selected { background: rgba(68,136,255,0.25); }
 .tree-node .dot { width: 6px; height: 6px; border-radius: 50%; background: #4488ff; flex-shrink: 0; }
 .tree-node .dot.root { background: #333; }

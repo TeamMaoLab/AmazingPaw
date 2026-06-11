@@ -314,7 +314,8 @@ function rebuildScene() {
           const from = positions[ann.from];
           const to = positions[ann.to];
           const def = step.params[ann.param];
-          const el = makeDimAnnotation(ann.param, def, from, to);
+          const el = makeDimAnnotation(ann.param, def, from, to, step.name);
+          el._stepName = step.name;
           annotationEls.push(el);
         }
         if (ann.type === 'angle') {
@@ -327,7 +328,8 @@ function rebuildScene() {
             if (rLen > 0.001) refDir = [ann.refDir[0]/rLen, ann.refDir[1]/rLen, ann.refDir[2]/rLen];
           }
           const pFrom = ann.from ? positions[ann.from] : null;
-          const el = makeAngleAnnotation(ann.param, def, vertex, pTo, refDir, pFrom);
+          const el = makeAngleAnnotation(ann.param, def, vertex, pTo, refDir, pFrom, step.name);
+          el._stepName = step.name;
           annotationEls.push(el);
         }
         if (ann.type === 'circle_r') {
@@ -335,6 +337,7 @@ function rebuildScene() {
           const center = result.pos;
           const radius = params[ann.param];
           const el = makeCircleRAnnotation(ann.param, def, center, radius);
+          el._stepName = step.name;
           annotationEls.push(el);
         }
       }
@@ -443,25 +446,8 @@ function makePlaneBorder(center, def) {
 // ══════════════════════════════════════════
 
 function bindAnnotationHover(labelEl, linkedMeshes) {
-  const highlight = () => {
-    labelEl.classList.add('highlight');
-    for (const m of linkedMeshes) {
-      m.material.opacity = 1;
-    }
-  };
-  const unhighlight = () => {
-    labelEl.classList.remove('highlight');
-    for (const m of linkedMeshes) {
-      m.material.opacity = 0.2;
-    }
-  };
-  labelEl.addEventListener('mouseenter', highlight);
-  labelEl.addEventListener('mouseleave', unhighlight);
-  // Store for 3D hover later if needed
-  labelEl._linkedMeshes = linkedMeshes;
-  for (const m of linkedMeshes) {
-    m._linkedLabel = labelEl;
-  }
+  labelEl.addEventListener('mouseenter', () => setHover(labelEl._stepName));
+  labelEl.addEventListener('mouseleave', () => clearHover());
 }
 
 function makeLabel(cls, text, pos3, color) {
@@ -474,7 +460,7 @@ function makeLabel(cls, text, pos3, color) {
   return div;
 }
 
-function makeDimAnnotation(paramKey, def, from, to) {
+function makeDimAnnotation(paramKey, def, from, to, stepName) {
   const dir = [to[0] - from[0], to[1] - from[1], to[2] - from[2]];
   const len = Math.sqrt(dir[0] ** 2 + dir[1] ** 2 + dir[2] ** 2);
   if (len < 0.001) {
@@ -488,6 +474,7 @@ function makeDimAnnotation(paramKey, def, from, to) {
     containerEl.appendChild(div);
     return div;
   }
+  const meshIdx = annotationMeshes.length;
   const offset = 8;
   const perp = [-dir[2] / len, 0, dir[0] / len];
 
@@ -567,6 +554,7 @@ function makeDimAnnotation(paramKey, def, from, to) {
   div.addEventListener('dblclick', () => startEditDim(div, paramKey, def));
   bindAnnotationHover(div, groupMeshes);
   containerEl.appendChild(div);
+  for (let i = meshIdx; i < annotationMeshes.length; i++) annotationMeshes[i]._stepName = stepName;
   return div;
 }
 
@@ -579,6 +567,7 @@ function makeCircleRAnnotation(paramKey, def, center, radius) {
   div._pos3 = labelPos;
   div.innerHTML = `${paramKey} = <span class="dim-value">${params[paramKey]}${def.unit}</span>`;
   div.addEventListener('dblclick', () => startEditDim(div, paramKey, def));
+  bindAnnotationHover(div, []);
   containerEl.appendChild(div);
   return div;
 }
@@ -610,7 +599,7 @@ function startEditDim(div, paramKey, def) {
   });
 }
 
-function makeAngleAnnotation(paramKey, def, vertex, pTo, refDir, pFrom) {
+function makeAngleAnnotation(paramKey, def, vertex, pTo, refDir, pFrom, stepName) {
   const d2 = [pTo[0] - vertex[0], pTo[1] - vertex[1], pTo[2] - vertex[2]];
   const len2 = Math.sqrt(d2[0] ** 2 + d2[1] ** 2 + d2[2] ** 2);
 
@@ -663,6 +652,8 @@ function makeAngleAnnotation(paramKey, def, vertex, pTo, refDir, pFrom) {
     containerEl.appendChild(div);
     return div;
   }
+
+  const meshIdx = annotationMeshes.length;
 
   // Rodrigues rotation helper
   const rodrigues = (v, k, theta) => {
@@ -766,6 +757,7 @@ function makeAngleAnnotation(paramKey, def, vertex, pTo, refDir, pFrom) {
   div.addEventListener('dblclick', () => startEditAngle(div, paramKey, def));
   bindAnnotationHover(div, groupMeshes);
   containerEl.appendChild(div);
+  for (let i = meshIdx; i < annotationMeshes.length; i++) annotationMeshes[i]._stepName = stepName;
   return div;
 }
 
@@ -897,6 +889,62 @@ function applyHighlight() {
   }
 }
 
+let hoveredStep = null;
+
+function setHover(stepName) {
+  if (!stepName || hoveredStep === stepName) return;
+  clearHover();
+  hoveredStep = stepName;
+
+  // Highlight tree node
+  document.querySelectorAll('.tree-node').forEach(el => {
+    if (el._stepName === stepName) el.classList.add('hover');
+  });
+
+  // Highlight 3D structure (point + line)
+  const m = meshes[stepName];
+  if (m) {
+    if (m.point) {
+      m.point.scale.setScalar(2.0);
+      m.point.material.color.set(0xff8844);
+    }
+    if (m.line) {
+      m.line.material.opacity = 1.0;
+      m.line.material.transparent = false;
+      m.line.material.color.set(0xff8844);
+    }
+  }
+
+  // Highlight annotation labels
+  for (const el of annotationEls) {
+    if (el._stepName === stepName && (el.classList.contains('dim-label') || el.classList.contains('angle-label'))) {
+      el.classList.add('highlight');
+    }
+  }
+
+  // Highlight annotation 3D meshes
+  for (const mesh of annotationMeshes) {
+    if (mesh._stepName === stepName) mesh.material.opacity = 1;
+  }
+}
+
+function clearHover() {
+  if (hoveredStep === null) return;
+  hoveredStep = null;
+
+  document.querySelectorAll('.tree-node.hover').forEach(el => el.classList.remove('hover'));
+
+  for (const el of annotationEls) {
+    if (el.classList.contains('dim-label') || el.classList.contains('angle-label')) {
+      el.classList.remove('highlight');
+    }
+  }
+
+  for (const m of annotationMeshes) m.material.opacity = 0.2;
+
+  applyHighlight();
+}
+
 function updateTreeSelection() {
   document.querySelectorAll('.tree-node').forEach(el => {
     el.classList.toggle('selected', el._stepName === selectedName);
@@ -929,6 +977,8 @@ function buildGrowthTree() {
       ${paramTag ? `<span class="tag">${paramTag}</span>` : ''}
     `;
     node.addEventListener('click', (e) => { e.stopPropagation(); selectNode(step.name); });
+    node.addEventListener('mouseenter', () => setHover(step.name));
+    node.addEventListener('mouseleave', () => clearHover());
     frag.appendChild(node);
 
     const kids = childrenOf[step.name];
