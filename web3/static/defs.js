@@ -117,11 +117,11 @@ export const GROWTH = [
   {
     name: 'plate_end', parent: 'arm_end', label: 'K',
     params: {
-      L_AR: { default: 50, min: 0, max: 100, step: 0.5, unit: 'mm' },
+      L_AK: { default: 50, min: 0, max: 100, step: 0.5, unit: 'mm' },
       gamma: { default: 70, min: 0, max: 360, step: 1, unit: '°' },
     },
     annotations: [
-      { type: 'dim', param: 'L_AR', from: 'arm_end', to: 'plate_end' },
+      { type: 'dim', param: 'L_AK', from: 'arm_end', to: 'plate_end' },
       { type: 'angle', param: 'gamma', vertex: 'arm_end', from: 'tip', to: 'plate_end' },
     ],
     build: (p, parentPos) => {
@@ -129,9 +129,9 @@ export const GROWTH = [
       const rad = absAngle * Math.PI / 180;
       return {
         pos: [
-          parentPos[0] + p.L_AR * Math.cos(rad),
+          parentPos[0] + p.L_AK * Math.cos(rad),
           parentPos[1],
-          parentPos[2] + p.L_AR * Math.sin(rad),
+          parentPos[2] + p.L_AK * Math.sin(rad),
         ],
       };
     },

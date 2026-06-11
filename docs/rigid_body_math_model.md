@@ -38,7 +38,7 @@ $$E = (x_e,\ -y_e,\ z_e) \quad \text{--- 左舵机旋转中心（固定）}$$
 | $L_{PA}$ | 7 | mm | P → A 距离（+X 方向） |
 | $L_{AT}$ | 7 | mm | A → T 长度 |
 | $\alpha$ | 35 | ° | A → T 角度（从 +X 方向计量，XZ 平面内） |
-| $L_{AR}$ | 50 | mm | A → K（plate_end）长度 |
+| $L_{AK}$ | 50 | mm | A → K（plate_end）长度 |
 | $\gamma$ | 70 | ° | A → K 角度（相对 A→T 方向计量） |
 | $\text{BarHalf}$ | 7 | mm | T 横杆半宽（±Y 方向） |
 
@@ -54,7 +54,7 @@ $$L_{QK} = \|Q_0 - K_0\| \quad \text{--- UQK 三角形 QK 边长}$$
 
 $$L_{UK} = \|U_0 - K_0\| \quad \text{--- UQK 三角形 UK 边长}$$
 
-$$\|AK\| = L_{AR} \quad \text{--- KATLR 刚体内固定距离}$$
+$$\|AK\| = L_{AK} \quad \text{--- KATLR 刚体内固定距离}$$
 
 $$\|AT\| = L_{AT} \quad \text{--- KATLR 刚体内固定距离}$$
 
@@ -82,7 +82,7 @@ $$U_0 = (L_{BP},\ 0,\ z_0 + L_{PQ} + L_{QU})$$
 
 $$T_0 = (L_{BP} + L_{PA} + L_{AT}\cos\alpha,\ 0,\ z_0 + L_{AT}\sin\alpha)$$
 
-$$K_0 = (L_{BP} + L_{PA} + L_{AR}\cos(\alpha+\gamma),\ 0,\ z_0 + L_{AR}\sin(\alpha+\gamma))$$
+$$K_0 = (L_{BP} + L_{PA} + L_{AK}\cos(\alpha+\gamma),\ 0,\ z_0 + L_{AK}\sin(\alpha+\gamma))$$
 
 $$R_0 = (T_{0x},\ +\text{BarHalf},\ T_{0z})$$
 
@@ -149,15 +149,15 @@ KATLR 是最大的刚体，包含手指尖端板和横杆。
 
 在 KATLR 刚体中（以 A 为参考点），各点的局部坐标由以下关系定义：
 
-- $K$ 相对于 $A$：距离 $L_{AR}$，方向角 $(\alpha + \gamma)$ 从 +X（在 XZ 平面内）
+- $K$ 相对于 $A$：距离 $L_{AK}$，方向角 $(\alpha + \gamma)$ 从 +X（在 XZ 平面内）
 - $T$ 相对于 $A$：距离 $L_{AT}$，方向角 $\alpha$ 从 +X（在 XZ 平面内）
 - $R = T + (0,\ +\text{BarHalf},\ 0)$
 - $L = T + (0,\ -\text{BarHalf},\ 0)$
 
 内部固定距离：
-- $\|AK\| = L_{AR}$
+- $\|AK\| = L_{AK}$
 - $\|AT\| = L_{AT}$
-- $\|TK\| = \sqrt{L_{AT}^2 + L_{AR}^2 - 2 L_{AT} L_{AR} \cos\gamma}$（常数，刚体不变）
+- $\|TK\| = \sqrt{L_{AT}^2 + L_{AK}^2 - 2 L_{AT} L_{AK} \cos\gamma}$（常数，刚体不变）
 - $\|TR\| = \text{BarHalf}$
 - $\|TL\| = \text{BarHalf}$
 - $\|RL\| = 2 \cdot \text{BarHalf}$
@@ -220,7 +220,7 @@ KATLR 是最大的刚体，包含手指尖端板和横杆。
 $$APB \xrightarrow{P} QP \xrightarrow{Q} UQK \xrightarrow{K} KATLR \xrightarrow{A} APB$$
 
 - 杆 1 (APB)：P → A，长度 $L_{PA}$
-- 杆 2 (KATLR)：A → K，长度 $L_{AR}$
+- 杆 2 (KATLR)：A → K，长度 $L_{AK}$
 - 杆 3 (UQK)：K → Q，长度 $L_{QK}$
 - 杆 4 (QP)：Q → P，长度 $L_{PQ}$
 
@@ -340,9 +340,9 @@ $$= \begin{pmatrix} L_{BP} + L_{PQ}\sin\varphi \\ -L_{PQ}\cos\varphi \cdot \sin\
 
 则 K 的全局坐标为：
 
-$$K(\theta, \phi) = A + R_x(\theta) \cdot (L_{AR}\cos(\alpha+\gamma+\phi),\ 0,\ L_{AR}\sin(\alpha+\gamma+\phi))$$
+$$K(\theta, \phi) = A + R_x(\theta) \cdot (L_{AK}\cos(\alpha+\gamma+\phi),\ 0,\ L_{AK}\sin(\alpha+\gamma+\phi))$$
 
-$$= \begin{pmatrix} L_{BP} + L_{PA} + L_{AR}\cos\eta \\ -L_{AR}\sin\eta \cdot \sin\theta \\ z_0 + L_{AR}\sin\eta \cdot \cos\theta \end{pmatrix}$$
+$$= \begin{pmatrix} L_{BP} + L_{PA} + L_{AK}\cos\eta \\ -L_{AK}\sin\eta \cdot \sin\theta \\ z_0 + L_{AK}\sin\eta \cdot \cos\theta \end{pmatrix}$$
 
 其中 $\eta = \alpha + \gamma + \phi$。
 
@@ -432,7 +432,7 @@ $$f_2 = \Delta x_2^2 + \Delta y_2^2 + \Delta z_2^2 - L_{rod\_l}^2 = 0$$
 
 $$\|PA\| = L_{PA} \quad \text{(APB 刚体)}$$
 
-$$\|AK\| = L_{AR} \quad \text{(KATLR 刚体)}$$
+$$\|AK\| = L_{AK} \quad \text{(KATLR 刚体)}$$
 
 $$\|KQ\| = L_{QK} \quad \text{(UQK 刚体)}$$
 
@@ -442,7 +442,7 @@ $$\|QP\| = L_{PQ} \quad \text{(QP 刚体)}$$
 
 ### 5.6 $\varphi$ 与 $\phi$ 的关系
 
-四连杆 P-A-K-Q-P 中，已知 P 和 A 的位置（固定），给定 QP 的旋转角 $\varphi$，可唯一确定 Q 的位置。然后由 UQK 刚体的 $\|QK\| = L_{QK}$ 和 KATLR 刚体的 $\|AK\| = L_{AR}$，K 的位置由两个圆的交点确定（至多 2 解，由装配构型选择）。
+四连杆 P-A-K-Q-P 中，已知 P 和 A 的位置（固定），给定 QP 的旋转角 $\varphi$，可唯一确定 Q 的位置。然后由 UQK 刚体的 $\|QK\| = L_{QK}$ 和 KATLR 刚体的 $\|AK\| = L_{AK}$，K 的位置由两个圆的交点确定（至多 2 解，由装配构型选择）。
 
 但反过来，若以 $\phi$（KATLR 的旋转角）为变量，则 K 的位置已知，Q 的位置由 $\|KQ\| = L_{QK}$ 和 $\|QP\| = L_{PQ}$ 确定。两种参数化等价——选其一为独立变量，另一个由四连杆几何唯一确定。
 
@@ -522,7 +522,7 @@ $(\theta, \phi)$ 求解完成后，所有点的位置可解析计算：
 | 3 | — | $D$ | $(x_e,\ y_e+R\sin\beta_1,\ z_e+R\cos\beta_1)$ | $\beta_1$ |
 | 4 | — | $F$ | $(x_e,\ -y_e-R\sin\beta_2,\ z_e+R\cos\beta_2)$ | $\beta_2$ |
 | 5 | 1 | $\theta, \phi$ | Newton-Raphson 求解 $f_1=f_2=0$ | $\beta_1, \beta_2$ |
-| 6 | 2 | $K$ | $A + R_x(\theta) \cdot (L_{AR}\cos(\alpha{+}\gamma{+}\phi),\ 0,\ L_{AR}\sin(\alpha{+}\gamma{+}\phi))$ | $\theta, \phi$ |
+| 6 | 2 | $K$ | $A + R_x(\theta) \cdot (L_{AK}\cos(\alpha{+}\gamma{+}\phi),\ 0,\ L_{AK}\sin(\alpha{+}\gamma{+}\phi))$ | $\theta, \phi$ |
 | 7 | 2 | $Q$ | 由四连杆几何从 K, A, P 反解 | $\theta, \phi$ |
 | 8 | 2 | $U$ | 由 UQK 三角形从 Q, K 确定 | $Q, K$ |
 | 9 | 2 | $T$ | $A + R_x(\theta) \cdot (L_{AT}\cos(\alpha{+}\phi),\ 0,\ L_{AT}\sin(\alpha{+}\phi))$ | $\theta, \phi$ |

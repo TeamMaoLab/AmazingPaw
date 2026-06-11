@@ -58,7 +58,7 @@ const SECTIONS = [
           ['$L_{PA}$', '7', 'mm', 'P → A 距离'],
           ['$L_{AT}$', '7', 'mm', 'A → T 长度'],
           ['$\\alpha$', '35', '°', 'A → T 角度（从 +X）'],
-          ['$L_{AR}$', '50', 'mm', 'A → K 长度'],
+          ['$L_{AK}$', '50', 'mm', 'A → K 长度'],
           ['$\\gamma$', '70', '°', 'A → K 角度（相对 A→T）'],
           ['$\\text{BarHalf}$', '7', 'mm', 'T 横杆半宽'],
         ],
@@ -81,7 +81,7 @@ const SECTIONS = [
       { type: 'math', latex: 'Q_0 = (L_{BP},\\ 0,\\ z_0 + L_{PQ})' },
       { type: 'math', latex: 'U_0 = (L_{BP},\\ 0,\\ z_0 + L_{PQ} + L_{QU})' },
       { type: 'math', latex: 'T_0 = (L_{BP} + L_{PA} + L_{AT}\\cos\\alpha,\\ 0,\\ z_0 + L_{AT}\\sin\\alpha)' },
-      { type: 'math', latex: 'K_0 = (L_{BP} + L_{PA} + L_{AR}\\cos(\\alpha\\!+\\!\\gamma),\\ 0,\\ z_0 + L_{AR}\\sin(\\alpha\\!+\\!\\gamma))' },
+      { type: 'math', latex: 'K_0 = (L_{BP} + L_{PA} + L_{AK}\\cos(\\alpha\\!+\\!\\gamma),\\ 0,\\ z_0 + L_{AK}\\sin(\\alpha\\!+\\!\\gamma))' },
       { type: 'math', latex: 'D_0 = (x_e,\\ y_e + R\\sin\\beta_1,\\ z_e + R\\cos\\beta_1)' },
       { type: 'math', latex: 'F_0 = (x_e,\\ -y_e - R\\sin\\beta_1,\\ z_e + R\\cos\\beta_1)' },
     ],
@@ -114,7 +114,7 @@ const SECTIONS = [
 
       { type: 'h3', text: '2.4 KATLR — 手指板刚体（点 K, A, T, L, R）' },
       { type: 'p', html: true, text: 'K 相对 A：距离 L<sub>AR</sub>，方向角 (α+γ)；T 相对 A：距离 L<sub>AT</sub>，方向角 α。R = T + (0, +BarHalf, 0)，L = T + (0, −BarHalf, 0)。' },
-      { type: 'math', latex: '\\|TK\\| = \\sqrt{L_{AT}^2 + L_{AR}^2 - 2 L_{AT} L_{AR} \\cos\\gamma} \\quad \\text{（常数）}' },
+      { type: 'math', latex: '\\|TK\\| = \\sqrt{L_{AT}^2 + L_{AK}^2 - 2 L_{AT} L_{AK} \\cos\\gamma} \\quad \\text{（常数）}' },
       { type: 'p', text: '关键：KATLR 同时包含 A（与 APB 共享）和 K（与 UQK 共享），形成结构闭环。' },
 
       { type: 'h3', text: '2.5–2.8 连杆与舵机臂' },
@@ -152,7 +152,7 @@ const SECTIONS = [
       { type: 'math', latex: 'APB \\xrightarrow{P} QP \\xrightarrow{Q} UQK \\xrightarrow{K} KATLR \\xrightarrow{A} APB' },
       { type: 'ul', items: [
         '杆 1 (APB)：P → A，长度 L_{PA}',
-        '杆 2 (KATLR)：A → K，长度 L_{AR}',
+        '杆 2 (KATLR)：A → K，长度 L_{AK}',
         '杆 3 (UQK)：K → Q，长度 L_{QK}',
         '杆 4 (QP)：Q → P，长度 L_{PQ}',
       ]},
@@ -207,7 +207,7 @@ const SECTIONS = [
       { type: 'p', text: 'Q 的全局坐标：' },
       { type: 'math', latex: 'Q(\\theta, \\varphi) = \\begin{pmatrix} L_{BP} + L_{PQ}\\sin\\varphi \\\\ -L_{PQ}\\cos\\varphi \\cdot \\sin\\theta \\\\ z_0 + L_{PQ}\\cos\\varphi \\cdot \\cos\\theta \\end{pmatrix}' },
       { type: 'p', html: true, text: '记 α\' = α + φ，η = α + γ + φ。K、T、R、L 的全局坐标：' },
-      { type: 'math', latex: 'K(\\theta, \\phi) = A + R_x(\\theta) \\cdot \\begin{pmatrix} L_{AR}\\cos\\eta \\\\ 0 \\\\ L_{AR}\\sin\\eta \\end{pmatrix}' },
+      { type: 'math', latex: 'K(\\theta, \\phi) = A + R_x(\\theta) \\cdot \\begin{pmatrix} L_{AK}\\cos\\eta \\\\ 0 \\\\ L_{AK}\\sin\\eta \\end{pmatrix}' },
       { type: 'math', latex: 'T(\\theta, \\phi) = A + R_x(\\theta) \\cdot \\begin{pmatrix} L_{AT}\\cos\\alpha\' \\\\ 0 \\\\ L_{AT}\\sin\\alpha\' \\end{pmatrix}' },
       { type: 'math', latex: 'R = T + R_x(\\theta)\\cdot(0,\\,\\text{BarHalf},\\,0), \\quad L = T + R_x(\\theta)\\cdot(0,\\,-\\text{BarHalf},\\,0)' },
 
@@ -232,7 +232,7 @@ const SECTIONS = [
       { type: 'math', latex: 'f_2 = \\Delta x_2^2 + \\Delta y_2^2 + \\Delta z_2^2 - L_{rod\\_l}^2 = 0' },
 
       { type: 'h3', text: '5.5 结构四连杆约束' },
-      { type: 'math', latex: '\\|PA\\| = L_{PA},\\ \\|AK\\| = L_{AR},\\ \\|KQ\\| = L_{QK},\\ \\|QP\\| = L_{PQ}' },
+      { type: 'math', latex: '\\|PA\\| = L_{PA},\\ \\|AK\\| = L_{AK},\\ \\|KQ\\| = L_{QK},\\ \\|QP\\| = L_{PQ}' },
       { type: 'p', text: '这四个约束由各刚体内部几何自动满足。φ 与 φ 的关系由四连杆几何确定。' },
     ],
   },
@@ -261,7 +261,7 @@ const SECTIONS = [
           ['3', '$D$', '$C + (0, R\\sin\\beta_1, R\\cos\\beta_1)$', '$\\beta_1$'],
           ['4', '$F$', '$E + (0, -R\\sin\\beta_2, R\\cos\\beta_2)$', '$\\beta_2$'],
           ['5', '$\\theta, \\phi$', 'Newton-Raphson', '$\\beta_1, \\beta_2$'],
-          ['6', '$K$', '$A + R_x(\\theta) \\cdot (L_{AR}\\cos\\eta,\\,0,\\,L_{AR}\\sin\\eta)$', '$\\theta, \\phi$'],
+          ['6', '$K$', '$A + R_x(\\theta) \\cdot (L_{AK}\\cos\\eta,\\,0,\\,L_{AK}\\sin\\eta)$', '$\\theta, \\phi$'],
           ['7', '$Q$', '四连杆几何反解', '$\\theta, \\phi$'],
           ['8', '$U$', 'UQK 三角形', '$Q, K$'],
           ['9', '$T$', '$A + R_x(\\theta) \\cdot (L_{AT}\\cos\\alpha\',\\,0,\\,L_{AT}\\sin\\alpha\')$', '$\\theta, \\phi$'],
