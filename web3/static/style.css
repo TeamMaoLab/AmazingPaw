@@ -16,18 +16,21 @@ body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: #
     border: 1px solid #ccc; border-radius: 3px; background: rgba(255,255,255,0.9); color: #555; cursor: pointer; }
 .view-btns button:hover { background: #e8f0fe; border-color: #4488ff; color: #1a56a0; }
 .view-btns button.sep { margin-left: 4px; }
+.view-btns button.active { background: #4488ff; color: #fff; border-color: #4488ff; }
 
 /* Dimension annotations */
 .dim-label {
   position: absolute; pointer-events: auto; cursor: pointer;
   font-size: 12px; font-family: "SF Mono", Menlo, monospace; font-weight: 500;
-  color: #cc5500; background: rgba(255,255,255,0.9); padding: 2px 6px;
-  border: 1px solid #ddd; border-radius: 3px; white-space: nowrap;
-  user-select: none; transition: border-color 0.15s, background 0.15s;
+  color: #cc5500; background: rgba(255,255,255,0.3); padding: 2px 6px;
+  border: 1px solid transparent; border-radius: 3px; white-space: nowrap;
+  user-select: none; opacity: 0.2; transition: opacity 0.2s, border-color 0.15s, background 0.15s;
 }
-.dim-label:hover { border-color: #cc5500; background: #fff8f0; }
+.dim-label:hover, .dim-label.highlight {
+  opacity: 1; border-color: #cc5500; background: rgba(255,255,255,0.9);
+}
 .dim-label.editing {
-  border-color: #4488ff; background: #fff;
+  opacity: 1; border-color: #4488ff; background: #fff;
   box-shadow: 0 0 0 2px rgba(68,136,255,0.3);
 }
 .dim-label input {
@@ -39,13 +42,15 @@ body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: #
 .angle-label {
   position: absolute; pointer-events: auto; cursor: pointer;
   font-size: 11px; font-family: "SF Mono", Menlo, monospace; font-weight: 500;
-  color: #2266aa; background: rgba(255,255,255,0.9); padding: 2px 6px;
-  border: 1px solid #ddd; border-radius: 3px; white-space: nowrap;
-  user-select: none; transition: border-color 0.15s, background 0.15s;
+  color: #2266aa; background: rgba(255,255,255,0.3); padding: 2px 6px;
+  border: 1px solid transparent; border-radius: 3px; white-space: nowrap;
+  user-select: none; opacity: 0.2; transition: opacity 0.2s, border-color 0.15s, background 0.15s;
 }
-.angle-label:hover { border-color: #2266aa; background: #f0f4ff; }
+.angle-label:hover, .angle-label.highlight {
+  opacity: 1; border-color: #2266aa; background: rgba(255,255,255,0.9);
+}
 .angle-label.editing {
-  border-color: #4488ff; background: #fff;
+  opacity: 1; border-color: #4488ff; background: #fff;
   box-shadow: 0 0 0 2px rgba(68,136,255,0.3);
 }
 .angle-label input {
@@ -75,3 +80,10 @@ body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: #
 .tree-node .name { font-weight: 600; }
 .tree-node .tag { font-size: 10px; color: #888; margin-left: auto; }
 .tree-children { padding-left: 18px; border-left: 1px dashed #ccc; margin-left: 3px; }
+
+/* Rod lengths */
+.rod-section { margin-top: 10px; padding-top: 8px; border-top: 1px solid #ccc; }
+.rod-row { display: flex; align-items: center; gap: 6px; padding: 1px 4px; font-size: 11px; line-height: 1.8; }
+.rod-dot { width: 6px; height: 6px; border-radius: 50%; background: #44aa88; flex-shrink: 0; }
+.rod-name { font-weight: 600; color: #44aa88; }
+.rod-val { margin-left: auto; font-family: "SF Mono", Menlo, monospace; color: #888; font-size: 10px; }

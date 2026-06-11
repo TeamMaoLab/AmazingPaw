@@ -25,7 +25,7 @@ const GROWTH = [
     }),
   },
   {
-    name: 'servo_z', parent: 'servo', label: 'Sz',
+    name: 'servo_z', parent: 'servo', label: 'H',
     dashed: true,
     params: { z_e: { default: 0, min: -20, max: 40, step: 0.5, unit: 'mm' } },
     annotations: [{ type: 'dim', param: 'z_e', from: 'servo', to: 'servo_z' }],
@@ -54,8 +54,8 @@ const GROWTH = [
   },
   {
     name: 'servo_arm_r', parent: 'servo_r', label: 'D',
-    params: { beta1: { default: 60, min: 0, max: 360, step: 1, unit: '°' } },
-    annotations: [{ type: 'angle', param: 'beta1', vertex: 'servo_r', from: 'servo_z', to: 'servo_arm_r' }],
+    params: { beta1: { default: 70, min: 0, max: 360, step: 1, unit: '°' } },
+    annotations: [{ type: 'angle', param: 'beta1', vertex: 'servo_r', refDir: [0, 0, 1], to: 'servo_arm_r' }],
     build: (p, parentPos) => {
       const rad = p.beta1 * Math.PI / 180;
       return { pos: [parentPos[0], parentPos[1] + p.R * Math.sin(rad), parentPos[2] + p.R * Math.cos(rad)] };
@@ -107,7 +107,7 @@ const GROWTH = [
     },
     annotations: [
       { type: 'dim', param: 'L_AT', from: 'arm_end', to: 'tip' },
-      { type: 'angle', param: 'alpha', vertex: 'arm_end', from: 'pivot', to: 'tip' },
+      { type: 'angle', param: 'alpha', vertex: 'arm_end', refDir: [1, 0, 0], to: 'tip' },
     ],
     build: (p, parentPos) => {
       const rad = p.alpha * Math.PI / 180;
@@ -121,10 +121,10 @@ const GROWTH = [
     },
   },
   {
-    name: 'plate_end', parent: 'arm_end', label: 'R',
+    name: 'plate_end', parent: 'arm_end', label: 'K',
     params: {
       L_AR: { default: 50, min: 0, max: 100, step: 0.5, unit: 'mm' },
-      gamma: { default: 90, min: 0, max: 360, step: 1, unit: '°' },
+      gamma: { default: 70, min: 0, max: 360, step: 1, unit: '°' },
     },
     annotations: [
       { type: 'dim', param: 'L_AR', from: 'arm_end', to: 'plate_end' },
@@ -169,7 +169,19 @@ let scene, renderer, camera, controls;
 let containerEl;
 const PT_R = 1.5, LINE_R = 0.4;
 let meshes = {};   // name -> { point, line? }
+let rodMeshes = [];
+let annotationMeshes = [];
 let annotationEls = [];
+let showAnnotations = true;
+
+const RODS = [
+  ['link_joint', 'plate_end'],  // U → K
+  ['arm_ext', 'plate_end'],     // Q → K
+  ['bar_l', 'servo_arm_l'],     // L → F
+  ['bar_r', 'servo_arm_r'],     // R → D
+];
+const ROD_COLOR = 0x44aa88;
+const ROD_R = 0.3;
 
 function initScene() {
   containerEl = document.getElementById('viewport');
@@ -177,7 +189,7 @@ function initScene() {
   scene.background = new THREE.Color(0xf5f5f5);
 
   camera = new THREE.PerspectiveCamera(50, 1, 0.1, 2000);
-  camera.position.set(80, -120, 80);
+  camera.position.set(150, -200, 150);
   camera.up.set(0, 0, 1);
 
   renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -185,7 +197,7 @@ function initScene() {
   containerEl.appendChild(renderer.domElement);
 
   controls = new OrbitControls(camera, renderer.domElement);
-  controls.target.set(10, 0, 20);
+  controls.target.set(15, 0, 35);
   controls.update();
 
   // World axes with labels
@@ -239,9 +251,15 @@ function rebuildScene() {
   }
   meshes = {};
 
-  // Clear annotation HTML elements
+  // Clear old rod meshes
+  for (const m of rodMeshes) { scene.remove(m); m.geometry.dispose(); m.material.dispose(); }
+  rodMeshes = [];
+
+  // Clear annotation HTML elements and 3D geometry
   for (const el of annotationEls) el.remove();
   annotationEls = [];
+  for (const m of annotationMeshes) { scene.remove(m); m.geometry.dispose(); m.material.dispose(); }
+  annotationMeshes = [];
 
   // Build all steps
   const positions = {};
@@ -301,10 +319,15 @@ function rebuildScene() {
         }
         if (ann.type === 'angle') {
           const vertex = positions[ann.vertex];
-          const pFrom = positions[ann.from];
           const pTo = positions[ann.to];
           const def = step.params[ann.param];
-          const el = makeAngleAnnotation(ann.param, def, vertex, pFrom, pTo);
+          let refDir = null;
+          if (ann.refDir) {
+            const rLen = Math.sqrt(ann.refDir[0]**2 + ann.refDir[1]**2 + ann.refDir[2]**2);
+            if (rLen > 0.001) refDir = [ann.refDir[0]/rLen, ann.refDir[1]/rLen, ann.refDir[2]/rLen];
+          }
+          const pFrom = ann.from ? positions[ann.from] : null;
+          const el = makeAngleAnnotation(ann.param, def, vertex, pTo, refDir, pFrom);
           annotationEls.push(el);
         }
         if (ann.type === 'circle_r') {
@@ -320,8 +343,30 @@ function rebuildScene() {
     meshes[step.name] = entry;
   }
 
-  // Re-apply highlight after rebuild
+  // ── Passive connecting rods ──
+  rodMeshes = [];
+  for (const [fromName, toName] of RODS) {
+    if (positions[fromName] && positions[toName]) {
+      const rod = makeCylinder(positions[fromName], positions[toName], ROD_R, ROD_COLOR);
+      scene.add(rod);
+      rodMeshes.push(rod);
+    }
+  }
+
+  updateRodLengths(positions);
+
+  // Re-apply highlight and annotation visibility
   if (selectedName) applyHighlight();
+  applyAnnotationVisibility();
+}
+
+function applyAnnotationVisibility() {
+  for (const m of annotationMeshes) m.visible = showAnnotations;
+  for (const el of annotationEls) {
+    if (el.classList.contains('dim-label') || el.classList.contains('angle-label')) {
+      el.style.display = showAnnotations ? '' : 'none';
+    }
+  }
 }
 
 // ── Cylinder between two points ──
@@ -397,6 +442,28 @@ function makePlaneBorder(center, def) {
 // Annotation system
 // ══════════════════════════════════════════
 
+function bindAnnotationHover(labelEl, linkedMeshes) {
+  const highlight = () => {
+    labelEl.classList.add('highlight');
+    for (const m of linkedMeshes) {
+      m.material.opacity = 1;
+    }
+  };
+  const unhighlight = () => {
+    labelEl.classList.remove('highlight');
+    for (const m of linkedMeshes) {
+      m.material.opacity = 0.2;
+    }
+  };
+  labelEl.addEventListener('mouseenter', highlight);
+  labelEl.addEventListener('mouseleave', unhighlight);
+  // Store for 3D hover later if needed
+  labelEl._linkedMeshes = linkedMeshes;
+  for (const m of linkedMeshes) {
+    m._linkedLabel = labelEl;
+  }
+}
+
 function makeLabel(cls, text, pos3, color) {
   const div = document.createElement('div');
   div.className = cls;
@@ -408,29 +475,97 @@ function makeLabel(cls, text, pos3, color) {
 }
 
 function makeDimAnnotation(paramKey, def, from, to) {
-  // Midpoint of the line, offset slightly perpendicular
-  const mid = [(from[0] + to[0]) / 2, (from[1] + to[1]) / 2, (from[2] + to[2]) / 2];
-  // Offset perpendicular to line direction in the plane
   const dir = [to[0] - from[0], to[1] - from[1], to[2] - from[2]];
   const len = Math.sqrt(dir[0] ** 2 + dir[1] ** 2 + dir[2] ** 2);
-  const offset = 6;
-  // Perpendicular in XZ plane (cross with Y)
-  let perp;
-  if (len > 0.001) {
-    perp = [-dir[2] / len, 0, dir[0] / len];
-  } else {
-    perp = [0, 0, 1];
+  if (len < 0.001) {
+    // Degenerate — just place label at midpoint
+    const mid = [(from[0] + to[0]) / 2, (from[1] + to[1]) / 2, (from[2] + to[2]) / 2];
+    const div = document.createElement('div');
+    div.className = 'dim-label';
+    div._pos3 = mid;
+    div.innerHTML = `${paramKey} = <span class="dim-value">${params[paramKey]}${def.unit}</span>`;
+    div.addEventListener('dblclick', () => startEditDim(div, paramKey, def));
+    containerEl.appendChild(div);
+    return div;
   }
-  const labelPos = [mid[0] + perp[0] * offset, mid[1] + perp[1] * offset, mid[2] + perp[2] * offset];
+  const offset = 8;
+  const perp = [-dir[2] / len, 0, dir[0] / len];
 
+  const extFrom = [from[0] + perp[0] * offset, from[1] + perp[1] * offset, from[2] + perp[2] * offset];
+  const extTo = [to[0] + perp[0] * offset, to[1] + perp[1] * offset, to[2] + perp[2] * offset];
+
+  const annColor = 0xcc5500;
+  const dimColor = 0xcc5500;
+  const groupMeshes = [];
+
+  // Extension lines
+  for (const [a, b] of [[from, extFrom], [to, extTo]]) {
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute([...a, ...b], 3));
+    const mat = new THREE.LineBasicMaterial({ color: annColor, transparent: true, opacity: 0.2 });
+    const line = new THREE.Line(geo, mat);
+    scene.add(line);
+    annotationMeshes.push(line);
+    groupMeshes.push(line);
+  }
+
+  // Dimension line
+  const dimGeo = new THREE.BufferGeometry();
+  dimGeo.setAttribute('position', new THREE.Float32BufferAttribute([...extFrom, ...extTo], 3));
+  const dimMat = new THREE.LineBasicMaterial({ color: dimColor, transparent: true, opacity: 0.2 });
+  const dimLine = new THREE.Line(dimGeo, dimMat);
+  scene.add(dimLine);
+  annotationMeshes.push(dimLine);
+  groupMeshes.push(dimLine);
+
+  // Tick marks
+  const tickLen = 2;
+  const tickDir = [dir[0] / len, dir[1] / len, dir[2] / len];
+  for (const pt of [extFrom, extTo]) {
+    const t1 = [pt[0] - tickDir[0] * tickLen, pt[1] - tickDir[1] * tickLen, pt[2] - tickDir[2] * tickLen];
+    const t2 = [pt[0] + tickDir[0] * tickLen, pt[1] + tickDir[1] * tickLen, pt[2] + tickDir[2] * tickLen];
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute([...t1, ...t2], 3));
+    const mat = new THREE.LineBasicMaterial({ color: dimColor, transparent: true, opacity: 0.2 });
+    const line = new THREE.Line(geo, mat);
+    scene.add(line);
+    annotationMeshes.push(line);
+    groupMeshes.push(line);
+  }
+
+  // Arrows at both ends of dimension line (pointing inward toward center)
+  const arrowSize = 2;
+  const perpDir = perp;
+  for (const [pt, sign] of [[extFrom, 1], [extTo, -1]]) {
+    // Arrow points along dimension line toward center
+    const ad = [tickDir[0] * sign, tickDir[1] * sign, tickDir[2] * sign];
+    const arrowPts = [
+      ...pt,
+      ...[pt[0] - ad[0] * arrowSize + perpDir[0] * arrowSize * 0.4,
+           pt[1] - ad[1] * arrowSize + perpDir[1] * arrowSize * 0.4,
+           pt[2] - ad[2] * arrowSize + perpDir[2] * arrowSize * 0.4],
+      ...pt,
+      ...[pt[0] - ad[0] * arrowSize - perpDir[0] * arrowSize * 0.4,
+           pt[1] - ad[1] * arrowSize - perpDir[1] * arrowSize * 0.4,
+           pt[2] - ad[2] * arrowSize - perpDir[2] * arrowSize * 0.4],
+    ];
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(arrowPts, 3));
+    const mat = new THREE.LineBasicMaterial({ color: dimColor, transparent: true, opacity: 0.2 });
+    const line = new THREE.Line(geo, mat);
+    scene.add(line);
+    annotationMeshes.push(line);
+    groupMeshes.push(line);
+  }
+
+  // HTML text label
+  const mid = [(extFrom[0] + extTo[0]) / 2, (extFrom[1] + extTo[1]) / 2, (extFrom[2] + extTo[2]) / 2];
   const div = document.createElement('div');
   div.className = 'dim-label';
-  div._pos3 = labelPos;
-
-  const value = params[paramKey];
-  div.innerHTML = `${paramKey} = <span class="dim-value">${value}${def.unit}</span>`;
-
+  div._pos3 = mid;
+  div.innerHTML = `${paramKey} = <span class="dim-value">${params[paramKey]}${def.unit}</span>`;
   div.addEventListener('dblclick', () => startEditDim(div, paramKey, def));
+  bindAnnotationHover(div, groupMeshes);
   containerEl.appendChild(div);
   return div;
 }
@@ -475,29 +610,161 @@ function startEditDim(div, paramKey, def) {
   });
 }
 
-function makeAngleAnnotation(paramKey, def, vertex, pFrom, pTo) {
-  // Compute angle bisector direction for label placement
-  const d1 = [pFrom[0] - vertex[0], pFrom[1] - vertex[1], pFrom[2] - vertex[2]];
+function makeAngleAnnotation(paramKey, def, vertex, pTo, refDir, pFrom) {
   const d2 = [pTo[0] - vertex[0], pTo[1] - vertex[1], pTo[2] - vertex[2]];
-  const len1 = Math.sqrt(d1[0] ** 2 + d1[1] ** 2 + d1[2] ** 2);
   const len2 = Math.sqrt(d2[0] ** 2 + d2[1] ** 2 + d2[2] ** 2);
-  // Bisector
-  const bis = [
-    d1[0] / len1 + d2[0] / len2,
-    d1[1] / len1 + d2[1] / len2,
-    d1[2] / len1 + d2[2] / len2,
+
+  const arcRadius = 8;
+  const arcColor = 0x2266aa;
+  const groupMeshes = [];
+
+  // n1: reference direction (either explicit refDir or from pFrom→vertex direction)
+  let n1;
+  if (refDir) {
+    n1 = refDir;
+  } else if (pFrom) {
+    const d1 = [pFrom[0] - vertex[0], pFrom[1] - vertex[1], pFrom[2] - vertex[2]];
+    const len1 = Math.sqrt(d1[0] ** 2 + d1[1] ** 2 + d1[2] ** 2);
+    n1 = len1 > 0.001 ? [d1[0] / len1, d1[1] / len1, d1[2] / len1] : [1, 0, 0];
+  } else {
+    n1 = [1, 0, 0];
+  }
+  const n2 = len2 > 0.001 ? [d2[0] / len2, d2[1] / len2, d2[2] / len2] : [1, 0, 0];
+
+  const cross = [
+    n1[1] * n2[2] - n1[2] * n2[1],
+    n1[2] * n2[0] - n1[0] * n2[2],
+    n1[0] * n2[1] - n1[1] * n2[0],
   ];
-  const offset = 10;
-  const labelPos = [vertex[0] + bis[0] * offset, vertex[1] + bis[1] * offset, vertex[2] + bis[2] * offset];
+  const crossLen = Math.sqrt(cross[0] ** 2 + cross[1] ** 2 + cross[2] ** 2);
+
+  // Rotation axis from cross product
+  let axis;
+  if (crossLen > 0.001) {
+    axis = [cross[0] / crossLen, cross[1] / crossLen, cross[2] / crossLen];
+  } else {
+    // Vectors nearly parallel — find a perpendicular axis
+    for (const c of [[0,1,0],[0,0,1],[1,0,0]]) {
+      const cx = n1[1]*c[2]-n1[2]*c[1], cy = n1[2]*c[0]-n1[0]*c[2], cz = n1[0]*c[1]-n1[1]*c[0];
+      const cl = Math.sqrt(cx*cx+cy*cy+cz*cz);
+      if (cl > 0.001) { axis = [cx/cl, cy/cl, cz/cl]; break; }
+    }
+  }
+
+  const paramSweep = params[paramKey] * Math.PI / 180;
+  if (!axis || Math.abs(paramSweep) < 0.001) {
+    // Degenerate angle — skip arc, just place label
+    const labelPos = [vertex[0] + n1[0] * 12, vertex[1] + n1[1] * 12, vertex[2] + n1[2] * 12];
+    const div = document.createElement('div');
+    div.className = 'angle-label';
+    div._pos3 = labelPos;
+    div.innerHTML = `${paramKey} = <span class="angle-value">${params[paramKey]}${def.unit}</span>`;
+    div.addEventListener('dblclick', () => startEditAngle(div, paramKey, def));
+    containerEl.appendChild(div);
+    return div;
+  }
+
+  // Rodrigues rotation helper
+  const rodrigues = (v, k, theta) => {
+    const ct = Math.cos(theta), st = Math.sin(theta);
+    const kxv = [k[1]*v[2]-k[2]*v[1], k[2]*v[0]-k[0]*v[2], k[0]*v[1]-k[1]*v[0]];
+    const kdv = k[0]*v[0]+k[1]*v[1]+k[2]*v[2];
+    return [
+      v[0]*ct + kxv[0]*st + k[0]*kdv*(1-ct),
+      v[1]*ct + kxv[1]*st + k[1]*kdv*(1-ct),
+      v[2]*ct + kxv[2]*st + k[2]*kdv*(1-ct),
+    ];
+  };
+
+  // Test which sweep direction brings n1 closer to n2
+  const endPlus = rodrigues(n1, axis, paramSweep);
+  const endMinus = rodrigues(n1, axis, -paramSweep);
+  const dotPlus = endPlus[0]*n2[0] + endPlus[1]*n2[1] + endPlus[2]*n2[2];
+  const dotMinus = endMinus[0]*n2[0] + endMinus[1]*n2[1] + endMinus[2]*n2[2];
+  const sweep = dotPlus >= dotMinus ? paramSweep : -paramSweep;
+
+  // Generate arc points
+  const segments = 24;
+  const pts = [];
+  for (let i = 0; i <= segments; i++) {
+    const t = i / segments;
+    const angle = t * sweep;
+    const p = rodrigues(n1, axis, angle);
+    pts.push(
+      vertex[0] + p[0] * arcRadius,
+      vertex[1] + p[1] * arcRadius,
+      vertex[2] + p[2] * arcRadius,
+    );
+  }
+  const arcGeo = new THREE.BufferGeometry();
+  arcGeo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+  const arcMat = new THREE.LineBasicMaterial({ color: arcColor, transparent: true, opacity: 0.2 });
+  const arcLine = new THREE.Line(arcGeo, arcMat);
+  scene.add(arcLine);
+  annotationMeshes.push(arcLine);
+  groupMeshes.push(arcLine);
+
+  // Reference arms extending from vertex in n1 and n2 directions
+  const armLen = arcRadius + 6;
+  for (const nd of [n1, n2]) {
+    const armGeo = new THREE.BufferGeometry();
+    armGeo.setAttribute('position', new THREE.Float32BufferAttribute([
+      ...vertex,
+      vertex[0] + nd[0] * armLen, vertex[1] + nd[1] * armLen, vertex[2] + nd[2] * armLen,
+    ], 3));
+    const armLine = new THREE.Line(armGeo, new THREE.LineBasicMaterial({ color: arcColor, transparent: true, opacity: 0.2 }));
+    scene.add(armLine);
+    annotationMeshes.push(armLine);
+    groupMeshes.push(armLine);
+  }
+
+  // Arrow at end of arc (pointing toward n2 direction)
+  const lastPt = pts.slice(-3);
+  const prevPt = pts.slice(-6, -3);
+  const arcDir = [lastPt[0] - prevPt[0], lastPt[1] - prevPt[1], lastPt[2] - prevPt[2]];
+  const arcDirLen = Math.sqrt(arcDir[0] ** 2 + arcDir[1] ** 2 + arcDir[2] ** 2);
+  if (arcDirLen > 0.001) {
+    const arrowSize = 2;
+    const ad = [arcDir[0] / arcDirLen, arcDir[1] / arcDirLen, arcDir[2] / arcDirLen];
+    // Perpendicular in arc plane (cross with cross-product of n1,n2)
+    const arcNormal = cross[0] ** 2 + cross[1] ** 2 + cross[2] ** 2 > 0.0001
+      ? [cross[0], cross[1], cross[2]] : [0, 0, 1];
+    const arcNormalLen = Math.sqrt(arcNormal[0] ** 2 + arcNormal[1] ** 2 + arcNormal[2] ** 2);
+    const an = [arcNormal[0] / arcNormalLen, arcNormal[1] / arcNormalLen, arcNormal[2] / arcNormalLen];
+    // Arrow wings: perpendicular to arc direction in arc plane
+    const wing1 = [an[1] * ad[2] - an[2] * ad[1], an[2] * ad[0] - an[0] * ad[2], an[0] * ad[1] - an[1] * ad[0]];
+    const arrowPts = [
+      ...lastPt,
+      ...[lastPt[0] - ad[0] * arrowSize + wing1[0] * arrowSize * 0.5,
+           lastPt[1] - ad[1] * arrowSize + wing1[1] * arrowSize * 0.5,
+           lastPt[2] - ad[2] * arrowSize + wing1[2] * arrowSize * 0.5],
+      ...lastPt,
+      ...[lastPt[0] - ad[0] * arrowSize - wing1[0] * arrowSize * 0.5,
+           lastPt[1] - ad[1] * arrowSize - wing1[1] * arrowSize * 0.5,
+           lastPt[2] - ad[2] * arrowSize - wing1[2] * arrowSize * 0.5],
+    ];
+    const arrowGeo = new THREE.BufferGeometry();
+    arrowGeo.setAttribute('position', new THREE.Float32BufferAttribute(arrowPts, 3));
+    const arrowLine = new THREE.Line(arrowGeo, arcMat);
+    scene.add(arrowLine);
+    annotationMeshes.push(arrowLine);
+    groupMeshes.push(arrowLine);
+  }
+
+  // Label at arc midpoint
+  const bis = [n1[0] + n2[0], n1[1] + n2[1], n1[2] + n2[2]];
+  const bisLen = Math.sqrt(bis[0] ** 2 + bis[1] ** 2 + bis[2] ** 2);
+  const labelOffset = arcRadius + 3;
+  const labelPos = bisLen > 0.001
+    ? [vertex[0] + bis[0] / bisLen * labelOffset, vertex[1] + bis[1] / bisLen * labelOffset, vertex[2] + bis[2] / bisLen * labelOffset]
+    : [vertex[0] + labelOffset, vertex[1], vertex[2]];
 
   const div = document.createElement('div');
   div.className = 'angle-label';
   div._pos3 = labelPos;
-
-  const value = params[paramKey];
-  div.innerHTML = `${paramKey} = <span class="angle-value">${value}${def.unit}</span>`;
-
+  div.innerHTML = `${paramKey} = <span class="angle-value">${params[paramKey]}${def.unit}</span>`;
   div.addEventListener('dblclick', () => startEditAngle(div, paramKey, def));
+  bindAnnotationHover(div, groupMeshes);
   containerEl.appendChild(div);
   return div;
 }
@@ -546,6 +813,8 @@ function updateAllLabelPositions() {
   const allEls = [...staticLabels, ...annotationEls];
   for (const el of allEls) {
     if (!el._pos3) continue;
+    const isAnnoLabel = el.classList.contains('dim-label') || el.classList.contains('angle-label');
+    if (isAnnoLabel && !showAnnotations) { el.style.display = 'none'; continue; }
     const v = new THREE.Vector3(...el._pos3).project(camera);
     const x = (v.x * 0.5 + 0.5) * containerEl.clientWidth;
     const y = (-v.y * 0.5 + 0.5) * containerEl.clientHeight;
@@ -564,22 +833,32 @@ function bindViewButtons() {
     btn.addEventListener('click', () => {
       const v = btn.dataset.view;
       if (v === 'home') {
-        camera.position.set(80, -120, 80);
+        camera.position.set(150, -200, 150);
         camera.up.set(0, 0, 1);
-        controls.target.set(10, 0, 20);
+        controls.target.set(15, 0, 35);
         controls.update();
         return;
       }
       const axis = v[1].toLowerCase();
       const sign = v[0] === '+' ? 1 : -1;
       const pos = [0, 0, 0];
-      pos['xyz'.indexOf(axis)] = sign * 150;
+      pos['xyz'.indexOf(axis)] = sign * 250;
       camera.position.set(...pos);
       camera.up.set(0, 0, axis === 'z' ? -sign : 1);
-      controls.target.set(10, 0, 20);
+      controls.target.set(15, 0, 35);
       controls.update();
     });
   });
+
+  // DIM toggle
+  const dimBtn = document.getElementById('dim-toggle');
+  if (dimBtn) {
+    dimBtn.addEventListener('click', () => {
+      showAnnotations = !showAnnotations;
+      dimBtn.classList.toggle('active', showAnnotations);
+      applyAnnotationVisibility();
+    });
+  }
 }
 
 // ══════════════════════════════════════════
@@ -668,6 +947,34 @@ function buildGrowthTree() {
   const roots = GROWTH.filter(s => s.parent === null);
   for (const root of roots) {
     container.appendChild(renderNode(root));
+  }
+
+  // Rod lengths section
+  const rodSection = document.createElement('div');
+  rodSection.className = 'rod-section';
+  rodSection.id = 'rod-lengths';
+  container.appendChild(rodSection);
+}
+
+function getLabelFor(name) {
+  const step = GROWTH.find(s => s.name === name);
+  return step ? step.label : name;
+}
+
+function updateRodLengths(positions) {
+  const el = document.getElementById('rod-lengths');
+  if (!el) return;
+  el.innerHTML = '';
+  for (const [from, to] of RODS) {
+    if (!positions[from] || !positions[to]) continue;
+    const dx = positions[to][0] - positions[from][0];
+    const dy = positions[to][1] - positions[from][1];
+    const dz = positions[to][2] - positions[from][2];
+    const len = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    const row = document.createElement('div');
+    row.className = 'rod-row';
+    row.innerHTML = `<span class="rod-dot"></span><span class="rod-name">${getLabelFor(from)}→${getLabelFor(to)}</span><span class="rod-val">${len.toFixed(1)}mm</span>`;
+    el.appendChild(row);
   }
 }
 
