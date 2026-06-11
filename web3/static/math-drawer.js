@@ -113,7 +113,7 @@ const SECTIONS = [
       { type: 'p', text: '三角形 UQK 初始配置设定后形状完全固定，运动中不变形。' },
 
       { type: 'h3', text: '2.4 KATLR — 手指板刚体（点 K, A, T, L, R）' },
-      { type: 'p', html: true, text: 'K 相对 A：距离 L<sub>AR</sub>，方向角 (α+γ)；T 相对 A：距离 L<sub>AT</sub>，方向角 α。R = T + (0, +BarHalf, 0)，L = T + (0, −BarHalf, 0)。' },
+      { type: 'p', html: true, text: 'K 相对 A：距离 L<sub>AK</sub>，方向角 (α+γ)；T 相对 A：距离 L<sub>AT</sub>，方向角 α。R = T + (0, +BarHalf, 0)，L = T + (0, −BarHalf, 0)。' },
       { type: 'math', latex: '\\|TK\\| = \\sqrt{L_{AT}^2 + L_{AK}^2 - 2 L_{AT} L_{AK} \\cos\\gamma} \\quad \\text{（常数）}' },
       { type: 'p', text: '关键：KATLR 同时包含 A（与 APB 共享）和 K（与 UQK 共享），形成结构闭环。' },
 
@@ -133,11 +133,11 @@ const SECTIONS = [
         type: 'table',
         headers: ['#', '关节', '连接刚体', '类型', 'DOF'],
         rows: [
-          ['1', 'B (轴承)', 'APB ↔ Ground', 'Revolute AB', '1'],
-          ['2', 'P', 'APB ↔ QP', 'Revolute', '1'],
-          ['3', 'A', 'APB ↔ KATLR', 'Revolute', '1'],
-          ['4', 'Q', 'QP ↔ UQK', 'Revolute', '1'],
-          ['5', 'K', 'UQK ↔ KATLR', 'Revolute', '1'],
+          ['1', 'B (轴承)', 'APB ↔ Ground', 'Rev AB (∥X)', '1'],
+          ['2', 'P', 'APB ↔ QP', 'Rev Y (local)', '1'],
+          ['3', 'A', 'APB ↔ KATLR', 'Rev Y (local)', '1'],
+          ['4', 'Q', 'QP ↔ UQK', 'Rev Y (local)', '1'],
+          ['5', 'K', 'UQK ↔ KATLR', 'Rev Y (local)', '1'],
           ['6', 'R', 'KATLR ↔ RD', 'Spherical', '3'],
           ['7', 'D', 'RD ↔ CD', 'Spherical', '3'],
           ['8', 'L', 'KATLR ↔ LF', 'Spherical', '3'],
@@ -145,6 +145,8 @@ const SECTIONS = [
           ['10', 'C', 'CD ↔ Ground', 'Revolute β₁', '1'],
           ['11', 'E', 'EF ↔ Ground', 'Revolute β₂', '1'],
         ],
+      },
+      { type: 'p', text: '关节 1 是唯一的全局旋转（绕 AB，∥X），使手指子系统倾斜。关节 2-5 都是局部 Y 方向旋转，手指内部运动始终在局部 XZ 平面内。系统 = 全局倾斜 θ + 平面内四连杆 φ。' },
       },
 
       { type: 'h3', text: '3.2 闭环结构' },

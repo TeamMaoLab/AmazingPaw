@@ -197,17 +197,19 @@ KATLR 是最大的刚体，包含手指尖端板和横杆。
 
 | # | 关节 | 连接刚体 | 类型 | 自由度 | 说明 |
 |---|------|---------|------|--------|------|
-| 1 | B (轴承) | APB ↔ Ground | Revolute X | 1 | APB 绕 AB 方向旋转 |
-| 2 | P (APB↔QP) | APB ↔ QP | Revolute | 1 | QP 相对 APB 旋转 |
-| 3 | A (APB↔KATLR) | APB ↔ KATLR | Revolute | 1 | KATLR 相对 APB 在 A 处旋转 |
-| 4 | Q (QP↔UQK) | QP ↔ UQK | Revolute | 1 | UQK 相对 QP 旋转 |
-| 5 | K (UQK↔KATLR) | UQK ↔ KATLR | Revolute | 1 | KATLR 相对 UQK 在 K 处旋转 |
+| 1 | B (轴承) | APB ↔ Ground | Revolute AB (∥X) | 1 | 全局倾斜：APB 绕 AB 方向旋转 θ |
+| 2 | P (APB↔QP) | APB ↔ QP | Revolute Y (local) | 1 | 平面内：QP 相对 APB 旋转 |
+| 3 | A (APB↔KATLR) | APB ↔ KATLR | Revolute Y (local) | 1 | 平面内：KATLR 相对 APB 旋转 |
+| 4 | Q (QP↔UQK) | QP ↔ UQK | Revolute Y (local) | 1 | 平面内：UQK 相对 QP 旋转 |
+| 5 | K (UQK↔KATLR) | UQK ↔ KATLR | Revolute Y (local) | 1 | 平面内：KATLR 相对 UQK 旋转 |
 | 6 | R (KATLR↔RD) | KATLR ↔ RD | Spherical | 3 | 球关节 |
 | 7 | D (RD↔CD) | RD ↔ CD | Spherical | 3 | 球关节 |
 | 8 | L (KATLR↔LF) | KATLR ↔ LF | Spherical | 3 | 球关节 |
 | 9 | F (LF↔EF) | LF ↔ EF | Spherical | 3 | 球关节 |
 | 10 | C (CD↔Ground) | CD ↔ Ground | Revolute (servo $\beta_1$) | 1 | 右舵机驱动 |
 | 11 | E (EF↔Ground) | EF ↔ Ground | Revolute (servo $\beta_2$) | 1 | 左舵机驱动 |
+
+**结构分解**：关节 1 是唯一的全局旋转（绕 AB，平行于 X），使整个手指子系统倾斜。关节 2-5 都是局部 Y 方向旋转，手指内部运动始终在局部 XZ 平面内。整个系统可分解为：全局倾斜 θ + 平面内四连杆运动 φ。
 
 ### 3.2 闭环结构
 
