@@ -5,7 +5,7 @@ import * as THREE from '/static/lib/three.module.js';
 import { OrbitControls } from '/static/lib/OrbitControls.js';
 import { S, setRebuildCallback } from './state.js';
 import { GROWTH, RODS, BODY_COLORS, STEP_BODY } from './defs.js';
-import { makeCylinder, makeDashedLine, makeDashedCircle, makePlane } from './geometry.js';
+import { makeCylinder, makeDashedLine, makeDashedCircle, makePlane, placeCylinder } from './geometry.js';
 import { makeLabel, makeDimAnnotation, makeAngleAnnotation, makeCircleRAnnotation, addStaticLabel, updateAllLabelPositions } from './annotations.js';
 import { applyHighlight, applyAnnotationVisibility, updateRodLengths } from './ui.js';
 
@@ -51,6 +51,7 @@ function addAxis(color, dir, text) {
 
 export function onResize() {
   const w = S.containerEl.clientWidth, h = S.containerEl.clientHeight;
+  if (w === 0 || h === 0) return;
   S.renderer.setSize(w, h);
   S.camera.aspect = w / h;
   S.camera.updateProjectionMatrix();
@@ -63,10 +64,41 @@ function animate() {
   S.renderer.render(S.scene, S.camera);
 }
 
-// ── Rebuild ──
+// ── Position computation (mode-dependent) ──
 
-function rebuildSceneImpl() {
-  // Clear old growth meshes
+// Store build results (for plane info etc.) alongside positions
+let _buildExtras = {};
+
+function computeDesignPositions() {
+  const positions = {};
+  _buildExtras = {};
+  for (const step of GROWTH) {
+    const parentPos = step.parent ? positions[step.parent] : [0, 0, 0];
+    const result = step.build(S.params, parentPos);
+    positions[step.name] = result.pos;
+    if (result.plane) _buildExtras[step.name] = { plane: result.plane };
+  }
+  return positions;
+}
+
+function computePositions() {
+  if (S.mode !== 'design' && S.kinematicPositions) {
+    // Compute build extras for servo plane in kinematic mode
+    _buildExtras = {};
+    for (const step of GROWTH) {
+      if (step.name === 'servo') {
+        const result = step.build(S.params, [0, 0, 0]);
+        if (result.plane) _buildExtras[step.name] = { plane: result.plane };
+      }
+    }
+    return S.kinematicPositions;
+  }
+  return computeDesignPositions();
+}
+
+// ── Scene cleanup ──
+
+function clearScene() {
   for (const m of Object.values(S.meshes)) {
     if (m.point) { S.scene.remove(m.point); m.point.geometry.dispose(); m.point.material.dispose(); }
     if (m.line) { S.scene.remove(m.line); m.line.geometry.dispose(); m.line.material.dispose(); }
@@ -82,14 +114,16 @@ function rebuildSceneImpl() {
   S.annotationEls = [];
   for (const m of S.annotationMeshes) { S.scene.remove(m); m.geometry.dispose(); m.material.dispose(); }
   S.annotationMeshes = [];
+}
 
-  // Build all steps
-  const positions = {};
+// ── Render from positions (mode-independent) ──
+
+function renderFromPositions(positions) {
+  const isDesign = S.mode === 'design';
+
   for (const step of GROWTH) {
-    const parentPos = step.parent ? positions[step.parent] : [0, 0, 0];
-    const result = step.build(S.params, parentPos);
-    positions[step.name] = result.pos;
-
+    const pos = positions[step.name];
+    if (!pos) continue;
     const entry = {};
 
     // Point (sphere)
@@ -97,44 +131,45 @@ function rebuildSceneImpl() {
     const ptGeo = new THREE.SphereGeometry(S.PT_R, 16, 16);
     const ptColor = body ? BODY_COLORS[body] : (step.parent === null ? 0x333333 : 0x999999);
     entry.point = new THREE.Mesh(ptGeo, new THREE.MeshBasicMaterial({ color: ptColor }));
-    entry.point.position.set(...result.pos);
+    entry.point.position.set(...pos);
     S.scene.add(entry.point);
 
     // Point label
-    const ptLabel = makeLabel('pt-label', step.label, result.pos);
+    const ptLabel = makeLabel('pt-label', step.label, pos);
     S.annotationEls.push(ptLabel);
 
     // Line from parent
-    if (step.parent && !step.noLine) {
+    if (step.parent && !step.noLine && positions[step.parent]) {
       const lineBody = STEP_BODY[step.name];
       if (step.dashed) {
-        entry.line = makeDashedLine(positions[step.parent], result.pos, 0xaa8844);
+        entry.line = makeDashedLine(positions[step.parent], pos, 0xaa8844);
       } else if (lineBody) {
-        entry.line = makeCylinder(positions[step.parent], result.pos, S.LINE_R, BODY_COLORS[lineBody]);
+        entry.line = makeCylinder(positions[step.parent], pos, S.LINE_R, BODY_COLORS[lineBody]);
       } else {
-        entry.line = makeCylinder(positions[step.parent], result.pos, S.LINE_R, 0x999999);
+        entry.line = makeCylinder(positions[step.parent], pos, S.LINE_R, 0x999999);
       }
       S.scene.add(entry.line);
     }
 
     // Servo circle
     if (step.circle) {
-      entry.circle = makeDashedCircle(result.pos, S.params[step.circle.param], 0xddaa44);
+      entry.circle = makeDashedCircle(pos, S.params[step.circle.param], 0xddaa44);
       S.scene.add(entry.circle);
     }
 
     // Plane
-    if (result.plane) {
-      entry.plane = makePlane(result.pos, result.plane);
+    const extras = _buildExtras[step.name];
+    if (extras && extras.plane) {
+      entry.plane = makePlane(pos, extras.plane);
       S.scene.add(entry.plane);
-      const planeLabel = makeLabel('pt-label', result.plane.label, [
-        result.pos[0], result.pos[1], result.pos[2] - 5,
+      const planeLabel = makeLabel('pt-label', extras.plane.label, [
+        pos[0], pos[1], pos[2] - 5,
       ], '#888');
       S.annotationEls.push(planeLabel);
     }
 
-    // Annotations
-    if (step.annotations) {
+    // Annotations (Design mode only)
+    if (isDesign && step.annotations) {
       for (const ann of step.annotations) {
         if (ann.type === 'dim') {
           const from = positions[ann.from];
@@ -150,8 +185,8 @@ function rebuildSceneImpl() {
           const def = step.params[ann.param];
           let refDir = null;
           if (ann.refDir) {
-            const rLen = Math.sqrt(ann.refDir[0]**2 + ann.refDir[1]**2 + ann.refDir[2]**2);
-            if (rLen > 0.001) refDir = [ann.refDir[0]/rLen, ann.refDir[1]/rLen, ann.refDir[2]/rLen];
+            const rLen = Math.sqrt(ann.refDir[0] ** 2 + ann.refDir[1] ** 2 + ann.refDir[2] ** 2);
+            if (rLen > 0.001) refDir = [ann.refDir[0] / rLen, ann.refDir[1] / rLen, ann.refDir[2] / rLen];
           }
           const pFrom = ann.from ? positions[ann.from] : null;
           const el = makeAngleAnnotation(ann.param, def, vertex, pTo, refDir, pFrom, step.name);
@@ -160,7 +195,7 @@ function rebuildSceneImpl() {
         }
         if (ann.type === 'circle_r') {
           const def = step.params[ann.param];
-          const center = result.pos;
+          const center = pos;
           const radius = S.params[ann.param];
           const el = makeCircleRAnnotation(ann.param, def, center, radius);
           el._stepName = step.name;
@@ -188,5 +223,65 @@ function rebuildSceneImpl() {
   applyAnnotationVisibility();
 }
 
-// Register rebuild callback
+// ── Fast position update (for animation) ──
+
+export function updatePositions(positions) {
+  for (const step of GROWTH) {
+    const pos = positions[step.name];
+    if (!pos) continue;
+    const entry = S.meshes[step.name];
+    if (!entry) continue;
+
+    if (entry.point) entry.point.position.set(...pos);
+
+    if (entry.line && step.parent && positions[step.parent]) {
+      if (step.dashed) {
+        // Dashed lines need position update
+        const geo = entry.line.geometry;
+        const pp = positions[step.parent];
+        geo.setAttribute('position', new THREE.Float32BufferAttribute([...pp, ...pos], 3));
+        geo.attributes.position.needsUpdate = true;
+        entry.line.computeLineDistances();
+      } else {
+        placeCylinder(entry.line, positions[step.parent], pos);
+      }
+    }
+
+    if (entry.circle) {
+      const radius = S.params[step.circle ? step.circle.param : 'R'];
+      // Update circle position
+      const segments = 64;
+      const pts = [];
+      for (let i = 0; i <= segments; i++) {
+        const t = (i / segments) * Math.PI * 2;
+        pts.push(pos[0], pos[1] + radius * Math.cos(t), pos[2] + radius * Math.sin(t));
+      }
+      entry.circle.geometry.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+      entry.circle.geometry.attributes.position.needsUpdate = true;
+      entry.circle.computeLineDistances();
+    }
+  }
+
+  // Update rods
+  for (let i = 0; i < RODS.length; i++) {
+    const r = RODS[i];
+    if (positions[r.from] && positions[r.to] && S.rodMeshes[i]) {
+      placeCylinder(S.rodMeshes[i], positions[r.from], positions[r.to]);
+    }
+  }
+
+  updateRodLengths(positions);
+}
+
+// ── Rebuild entry point ──
+
+function rebuildSceneImpl() {
+  clearScene();
+  const positions = computePositions();
+  renderFromPositions(positions);
+}
+
 setRebuildCallback(rebuildSceneImpl);
+
+// Export for mode manager to get design positions
+export { computeDesignPositions };

@@ -11,6 +11,12 @@
 <body>
 <div class="header">
   <h1>Parametric Skeleton</h1>
+  <div class="mode-tabs">
+    <button class="mode-tab active" data-mode="design">Design</button>
+    <button class="mode-tab" data-mode="kinematic">Kinematic</button>
+    <button class="mode-tab" data-mode="grid">Grid</button>
+    <button id="save-params-btn" class="mode-tab" style="margin-left:12px;background:#2ecc71;color:#fff;border-color:#27ae60;">Save Params</button>
+  </div>
   <span class="status" id="status">Ready</span>
 </div>
 <div class="main">
@@ -27,6 +33,42 @@
       <button id="math-toggle" class="sep" title="Math Model">MATH</button>
     </div>
     <div class="growth-tree" id="growth-tree"></div>
+
+    <!-- Kinematic mode controls -->
+    <div class="kinematic-panel hidden" id="kinematic-panel">
+      <div class="kinematic-sliders">
+        <div class="slider-row">
+          <label>β₁</label>
+          <input type="range" id="k-beta1" min="0" max="180" step="1" value="70">
+          <span class="val" id="k-beta1-val">70°</span>
+        </div>
+        <div class="slider-row">
+          <label>β₂</label>
+          <input type="range" id="k-beta2" min="0" max="180" step="1" value="70">
+          <span class="val" id="k-beta2-val">70°</span>
+        </div>
+      </div>
+      <div class="kinematic-status" id="kinematic-status"></div>
+      <div class="kinematic-anim">
+        <button id="anim-play">Play</button>
+        <button id="anim-stop">Stop</button>
+        <select id="anim-drive">
+          <option value="beta1">Sweep β₁</option>
+          <option value="beta2">Sweep β₂</option>
+        </select>
+        <span id="anim-status" class="anim-status"></span>
+      </div>
+    </div>
+
+    <!-- Grid mode panel -->
+    <div class="grid-panel hidden" id="grid-panel">
+      <div class="grid-header">
+        <span class="grid-title">β₁ × β₂ Workspace</span>
+        <span class="grid-status" id="grid-status">Ready</span>
+      </div>
+      <canvas id="grid-canvas" width="320" height="320"></canvas>
+      <div class="grid-footer" id="grid-footer">Click to explore</div>
+    </div>
   </div>
   <div class="math-drawer" id="math-drawer">
     <div class="math-drawer-inner" id="math-drawer-content"></div>

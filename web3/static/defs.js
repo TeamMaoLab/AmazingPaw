@@ -57,9 +57,9 @@ export const GROWTH = [
   },
   {
     name: 'servo_arm_l', parent: 'servo_l', label: 'F',
-    params: {},
+    params: { beta2: { default: 70, min: 0, max: 360, step: 1, unit: '°' } },
     build: (p, parentPos) => {
-      const rad = -p.beta1 * Math.PI / 180;
+      const rad = -p.beta2 * Math.PI / 180;
       return { pos: [parentPos[0], parentPos[1] + p.R * Math.sin(rad), parentPos[2] + p.R * Math.cos(rad)] };
     },
   },
@@ -184,11 +184,36 @@ export const STEP_BODY = {
   servo_arm_l: 'EF',
 };
 
-// Flatten default params from GROWTH definitions
+// Flatten default params from GROWTH definitions, override with saved file
 export function flattenParams() {
   const p = {};
   for (const step of GROWTH) {
     for (const [k, v] of Object.entries(step.params)) p[k] = v.default;
   }
   return p;
+}
+
+export function applyOverrides(p, overrides) {
+  for (const [k, v] of Object.entries(overrides)) {
+    if (k in p) p[k] = v;
+  }
+  return p;
+}
+
+export async function loadSavedParams() {
+  try {
+    const res = await fetch('/api/params');
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (_) { return null; }
+}
+
+export async function saveParams(params) {
+  try {
+    await fetch('/api/params', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+    });
+  } catch (_) { /* silently fail */ }
 }

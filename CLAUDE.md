@@ -10,8 +10,8 @@ Robotic hand kinematics modeling and visualization tool. A servo-driven mechanic
 
 ```bash
 # Active tool — web3 parametric skeleton + math model
-cd web3 && python -m http.server 8002
-# → http://localhost:8002/static/index.html
+uv run web3/server.py
+# → http://localhost:8002/index.html
 
 # Python environment
 uv sync

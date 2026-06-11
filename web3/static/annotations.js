@@ -132,6 +132,7 @@ export function makeCircleRAnnotation(paramKey, def, center, radius) {
 }
 
 function startEditDim(div, paramKey, def) {
+  if (S.mode !== 'design') return;
   if (div.classList.contains('editing')) return;
   div.classList.add('editing');
 
@@ -145,6 +146,7 @@ function startEditDim(div, paramKey, def) {
     const newVal = parseFloat(input.value);
     if (!isNaN(newVal) && newVal >= def.min && newVal <= def.max) {
       S.params[paramKey] = newVal;
+      if (paramKey === 'beta1') S.params.beta2 = newVal;
     }
     div.classList.remove('editing');
     rebuildScene();
@@ -313,6 +315,7 @@ export function makeAngleAnnotation(paramKey, def, vertex, pTo, refDir, pFrom, s
 }
 
 function startEditAngle(div, paramKey, def) {
+  if (S.mode !== 'design') return;
   if (div.classList.contains('editing')) return;
   div.classList.add('editing');
 
@@ -326,6 +329,7 @@ function startEditAngle(div, paramKey, def) {
     const newVal = parseFloat(input.value);
     if (!isNaN(newVal) && newVal >= def.min && newVal <= def.max) {
       S.params[paramKey] = newVal;
+      if (paramKey === 'beta1') S.params.beta2 = newVal;
     }
     div.classList.remove('editing');
     rebuildScene();

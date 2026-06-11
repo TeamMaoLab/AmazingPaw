@@ -31,6 +31,16 @@ export const S = {
   hoveredStep: null,
   showAnnotations: true,
 
+  // Mode system
+  mode: 'design',            // 'design' | 'kinematic' | 'grid'
+  solverResult: null,         // { theta, kappa } from Newton-Raphson
+  kinematicPositions: null,   // positions computed by solver
+  solverRodLengths: null,     // { L_RD2, L_LF2 } squared rod lengths
+  designBetas: null,           // { beta1, beta2 } saved from design mode
+  gridData: null,             // { grid: Float32Array, res, from, to, step }
+  gridComputing: false,
+  animId: null,               // requestAnimationFrame id
+
   // Geometry constants
   PT_R: 1.5,
   LINE_R: 0.4,
