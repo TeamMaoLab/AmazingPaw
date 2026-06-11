@@ -264,8 +264,6 @@ const SECTIONS = [
         'θ — APB 绕 AB 方向的旋转角',
         'φ — 结构四连杆 P-A-K-Q-P 的内部自由度',
       ]},
-      { type: 'p', text: 'φ 与 Phase 1 的 ψ（arm 绕 Y 轴旋转角）等价。' },
-
       { type: 'h3', text: '4.3 两阶段求解' },
       { type: 'p', text: '阶段 1 — 驱动系统：给定 (β₁, β₂)，由连杆长度约束求解被动变量 (θ, φ)。' },
       { type: 'math', latex: '\\begin{cases} f_1(\\theta,\\ \\phi;\\ \\beta_1) = 0 \\\\ f_2(\\theta,\\ \\phi;\\ \\beta_2) = 0 \\end{cases}' },
@@ -361,27 +359,6 @@ const SECTIONS = [
       { type: 'h3', text: '7.2 四连杆内部自由度' },
       { type: 'math', latex: 'F_{4bar} = 3(n{-}1) - 2j = 3 \\times 3 - 2 \\times 4 = 1' },
       { type: 'p', text: '四连杆有 1 个内部自由度。θ 和 φ 是独立的被动变量。' },
-
-      { type: 'h3', text: '7.3 与 Phase 1 的对应' },
-      {
-        type: 'table',
-        headers: ['本模型 (8 体)', 'Phase 1 (6 体)'],
-        rows: [
-          ['APB (B,P,A)', 'base + arm 的 P,A'],
-          ['QP (Q,P)', 'arm 的 Q'],
-          ['UQK (U,Q,K)', 'link + plate 的 Q,U'],
-          ['KATLR (K,A,T,L,R)', 'plate 的 T + arm 的 R,L'],
-          ['LF, RD, CD, EF', 'rod_l, rod_r, servo'],
-        ],
-      },
-      {
-        type: 'table',
-        headers: ['本模型', 'Phase 1', '含义'],
-        rows: [
-          ['$\\theta$', '$\\theta$', '绕 AB 轴旋转'],
-          ['$\\phi$', '$\\psi$', '内部角度变化'],
-        ],
-      },
     ],
   },
 ];

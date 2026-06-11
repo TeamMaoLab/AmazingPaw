@@ -280,7 +280,7 @@ $$\mathbf{q}_{passive} = (\theta,\ \varphi)^T$$
 - $\theta$ — APB 绕 AB 方向的旋转角（关节 1，轴承在 B 处）
 - $\varphi$ — 结构四连杆 P-A-K-Q-P 的内部运动变量
 
-$\varphi$ 的物理含义：四连杆机构的 1 个内部自由度，表现为 KATLR（或等效地 UQK、QP）相对 APB 的旋转。它与 Phase 1 模型中的 $\psi$（arm 绕 Y 轴旋转角）等价。
+$\varphi$ 的物理含义：四连杆机构的 1 个内部自由度，表现为 KATLR（或等效地 UQK、QP）相对 APB 的旋转。
 
 具体地，$\varphi$ 可以定义为 KATLR 上 K 点相对 A 点的角度偏离初始值的角度。设初始状态下 K 相对 A 的方向角为 $(\alpha + \gamma)_0$，则运动中：
 
@@ -571,28 +571,7 @@ $$F_{4bar} = 3(n-1) - 2j = 3 \times 3 - 2 \times 4 = 1$$
 
 因此，$\theta$ 和 $\phi$ 是独立的被动变量，总共需要 2 个约束方程来确定。
 
-### 7.3 与 Phase 1 模型的对应关系
-
-本模型的刚体分解与 Phase 1 模型（6 体）的对应关系：
-
-| 本模型 (8 体) | Phase 1 (6 体) | 说明 |
-|--------------|---------------|------|
-| APB | base + arm 的 P, A 部分 | Phase 1 中 base(B) 和 arm 共享 P 点 |
-| QP | arm 的 Q 部分 | Phase 1 中 P, Q 在同一 arm 刚体上 |
-| UQK | link(P,U) + plate(Q,U,T) 的 Q,U 部分 | Phase 1 中 link 和 plate 通过三角闭环约束 |
-| KATLR | plate(Q,U,T) 的 T 部分 + arm 的 R,L | Phase 1 中 T 在 plate 上，R,L 在 arm 上 |
-| LF, RD, CD, EF | rod_l, rod_r, servo_r, servo_l | 完全对应 |
-
-被动变量对应：
-
-| 本模型 | Phase 1 | 含义 |
-|-------|---------|------|
-| $\theta$ | $\theta$ | 绕 +X 轴的整体旋转 |
-| $\phi$ | $\psi$ | 内部角度变化（Phase 1 中为 arm 绕 Y 轴旋转） |
-
-物理本质相同，但刚体分解更细致：Phase 1 将 P-A-Q 合并为单一 arm 刚体，本模型将其拆分为 APB 和 QP 两个独立的刚体，并通过四连杆闭环约束连接。
-
-### 7.4 过约束说明
+### 7.3 过约束说明
 
 Gruebler-Kutzbach 公式对本机构给出负值自由度（过约束），与实际 $F = 2$ 矛盾。过约束来源：
 
@@ -630,16 +609,3 @@ Gruebler-Kutzbach 公式对本机构给出负值自由度（过约束），与�
 | $\gamma$ | gamma | A→K 角度（相对 A→T 方向） |
 | $\alpha'$ | — | $\alpha + \phi$，KATLR 上 T 的有效角度 |
 | $\eta$ | — | $\alpha + \gamma + \phi$，KATLR 上 K 的有效角度 |
-
-## 附录 B：与 Phase 1 数学模型的差异
-
-| 方面 | Phase 1 | 本模型 |
-|------|---------|--------|
-| 刚体数量 | 6 (base, arm, link, plate, 2×servo) | 8 (APB, QP, UQK, KATLR, LF, RD, CD, EF) |
-| arm 结构 | 单一刚体 P,A,Q,R,L | 拆分为 APB(P,A,B), QP(Q,P), KATLR(K,A,T,L,R) |
-| 三角闭环 | P-U-Q（刚性，0 DOF） | 无独立三角闭环 |
-| 结构闭环 | 隐含在 arm 刚体内 | 显式四连杆 P-A-K-Q-P（1 DOF） |
-| 连杆连接点 | R,L 在 arm 上 A 附近 | R,L 在 KATLR 上 T 的 ±Y 方向 |
-| 被动变量 | $(\theta, \psi)$，$\psi$ = arm 绕 Y 旋转 | $(\theta, \phi)$，$\phi$ = 四连杆内部自由度 |
-| 板端点 | 无（plate 只有 Q,U,T） | K（plate_end），A→K 定义角度 $\gamma$ |
-| 物理等价性 | — | 完全等价，只是分解粒度不同 |
