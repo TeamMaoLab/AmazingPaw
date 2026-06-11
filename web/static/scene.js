@@ -29,6 +29,8 @@ const frameLabelDivs = {};
 const bodyMeshes = [];
 const jointMeshes = [];
 
+const traceObjects = {};   // pointName → { line, buf, count, max }
+
 export function initScene(containerEl, definition, onNodeClick) {
     viewport = containerEl;
     mechDef = definition;
@@ -217,6 +219,42 @@ export function setPreviewMode(on) {
 export function updatePreviewGeometry(data) {
     if (!previewMode) return;
     rebuildPreviewObjects(data.points);
+}
+
+export function addTrace(pointName, color, maxPoints) {
+    if (traceObjects[pointName]) return;
+    const buf = new Float32Array(maxPoints * 3);
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.BufferAttribute(buf, 3));
+    geom.setDrawRange(0, 0);
+    const mat = new THREE.LineBasicMaterial({ color: new THREE.Color(color), transparent: true, opacity: 0.8 });
+    const line = new THREE.Line(geom, mat);
+    line.frustumCulled = false;
+    scene.add(line);
+    traceObjects[pointName] = { line, buf, count: 0, max: maxPoints };
+}
+
+export function appendTracePoint(pointName, pos) {
+    const t = traceObjects[pointName];
+    if (!t || t.count >= t.max) return;
+    const i = t.count * 3;
+    t.buf[i] = pos[0]; t.buf[i+1] = pos[1]; t.buf[i+2] = pos[2];
+    t.count++;
+    t.line.geometry.setDrawRange(0, t.count);
+    t.line.geometry.attributes.position.needsUpdate = true;
+}
+
+export function clearTraces() {
+    for (const [, t] of Object.entries(traceObjects)) {
+        scene.remove(t.line);
+        t.line.geometry.dispose();
+        t.line.material.dispose();
+    }
+    for (const k of Object.keys(traceObjects)) delete traceObjects[k];
+}
+
+export function showTraces(visible) {
+    for (const [, t] of Object.entries(traceObjects)) t.line.visible = visible;
 }
 
 function rebuildPreviewObjects(pts) {

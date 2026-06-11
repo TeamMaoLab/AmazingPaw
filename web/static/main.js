@@ -1,15 +1,35 @@
 /**
- * Entry point — coordinates scene, ui, and compute modules.
+ * Entry point — coordinates scene, ui, compute, and explorer modules.
+ *
+ * Params from API use legacy names: alpha, gamma, L_cp.
+ * compute.js accepts both (alpha/alpha0, gamma/gamma0, L_cp/L_BP) with fallbacks.
+ * psi defaults to 0 (initial state); explorer solves for it.
  */
 import { localCompute } from '/static/compute.js';
 import * as Scene from '/static/scene.js';
 import * as UI from '/static/ui.js';
+import * as Explorer from '/static/explorer.js';
+import { computeGrid, lookupAndCompute } from '/static/grid.js';
 
 // ── shared state ──
 let mechDef = null;
 let currentParams = {};
 let selectedName = null;
 let previewActive = false;
+
+// ── grid state ──
+const animator = Explorer.createAnimator();
+let explorerActive = false;
+let L_rod2 = 0;
+let gridData = null;
+const TRACE_POINTS = [
+    { name: 'T', color: '#cc4444' },
+    { name: 'U', color: '#44aa66' },
+    { name: 'Q', color: '#4488ff' },
+    { name: 'A', color: '#aa44aa' },
+];
+
+const GRID_FROM = 20, GRID_TO = 160, GRID_RES = 70;
 
 // ── highlight mapping ──
 const frameChildPoints = {
@@ -80,11 +100,12 @@ function onParamChange(pname, value) {
     const data = localCompute(currentParams);
     Scene.updateScene(data);
     refreshLinkLengths();
-    if (previewActive) Scene.updatePreviewGeometry(data.points);
+    if (previewActive) Scene.updatePreviewGeometry(data);
 }
 
 function onParamCommit() {
     doServerCompute();
+    rebuildGrid();
 }
 
 function refreshLinkLengths() {
@@ -112,6 +133,152 @@ async function doServerCompute() {
     }
 }
 
+// ── grid: compute & draw ──
+function computeLrod2() {
+    const data = localCompute(currentParams);
+    const r = data.link_lengths.right;
+    L_rod2 = r * r;
+}
+
+async function rebuildGrid() {
+    computeLrod2();
+    const statusEl = document.getElementById('grid-status');
+    statusEl.textContent = 'Computing...';
+    statusEl.className = 'grid-status computing';
+
+    gridData = await computeGrid(currentParams, L_rod2, GRID_FROM, GRID_TO, GRID_RES,
+        (done, total) => { statusEl.textContent = `Computing... ${done}/${total}`; }
+    );
+
+    statusEl.textContent = 'Ready — click/drag to explore';
+    statusEl.className = 'grid-status ready';
+    drawGrid();
+}
+
+function drawGrid() {
+    if (!gridData) return;
+    const canvas = document.getElementById('grid-canvas');
+    const { grid, res, step } = gridData;
+    const size = canvas.width;
+    const ctx = canvas.getContext('2d');
+    const cellW = size / res;
+    const cellH = size / res;
+
+    ctx.clearRect(0, 0, size, size);
+
+    for (let row = 0; row < res; row++) {
+        for (let col = 0; col < res; col++) {
+            const idx = (row * res + col) * 3;
+            const ok = grid[idx + 2] > 0;
+            if (ok) {
+                const psi = grid[idx + 1];
+                const t = Math.min(Math.abs(psi) / 30, 1);
+                const r = Math.round(40 + t * 160);
+                const g = Math.round(160 - t * 60);
+                const b = Math.round(80 + (1 - t) * 120);
+                ctx.fillStyle = `rgb(${r},${g},${b})`;
+            } else {
+                ctx.fillStyle = '#1a1a2e';
+            }
+            ctx.fillRect(col * cellW, row * cellH, Math.ceil(cellW), Math.ceil(cellH));
+        }
+    }
+
+    // axis labels
+    ctx.fillStyle = '#aaa';
+    ctx.font = '10px monospace';
+    ctx.fillText(`β₁ ${GRID_FROM}°`, 2, size - 2);
+    ctx.fillText(`${GRID_TO}°`, size - 30, size - 2);
+    ctx.save();
+    ctx.translate(10, 14);
+    ctx.fillText(`β₂ ${GRID_FROM}°`, 0, 0);
+    ctx.restore();
+
+    // current position marker
+    const curCol = Math.round((currentParams.beta1 - GRID_FROM) / step);
+    const curRow = Math.round((currentParams.beta2 - GRID_FROM) / step);
+    if (curCol >= 0 && curCol < res && curRow >= 0 && curRow < res) {
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(curCol * cellW - 1, curRow * cellH - 1, cellW + 2, cellH + 2);
+    }
+}
+
+function handleGridPointer(e) {
+    if (!gridData) return;
+    const canvas = document.getElementById('grid-canvas');
+    const { grid, res, from, step } = gridData;
+    const size = canvas.width;
+    const cellW = size / res;
+    const cellH = size / res;
+
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+    const col = Math.floor(x / cellW);
+    const row = Math.floor(y / cellH);
+    if (col < 0 || col >= res || row < 0 || row >= res) return;
+
+    const beta1 = GRID_FROM + col * step;
+    const beta2 = GRID_FROM + row * step;
+    const result = lookupAndCompute(currentParams, gridData, beta1, beta2);
+    if (!result) return;
+
+    const frame = result.data;
+    currentParams.beta1 = beta1;
+    currentParams.beta2 = beta2;
+    currentParams.theta = result.theta;
+    currentParams.psi = result.psi;
+    mechDef._paramValues = currentParams;
+    Scene.updateScene(frame);
+    if (previewActive) Scene.updatePreviewGeometry(frame);
+
+    if (explorerActive) {
+        for (const tp of TRACE_POINTS) {
+            if (frame.points[tp.name]) Scene.appendTracePoint(tp.name, frame.points[tp.name]);
+        }
+    }
+
+    document.getElementById('grid-footer').textContent =
+        `β₁=${beta1.toFixed(0)}° β₂=${beta2.toFixed(0)}° θ=${result.theta.toFixed(1)}° ψ=${result.psi.toFixed(1)}°`;
+}
+
+// ── explorer (trace mode) ──
+async function toggleExplorer() {
+    if (explorerActive) {
+        stopExplorer();
+        return;
+    }
+
+    explorerActive = true;
+    const btn = document.getElementById('btn-explore');
+    btn.classList.add('exploring');
+
+    if (!previewActive) {
+        previewActive = true;
+        document.getElementById('btn-preview').classList.add('active');
+        Scene.setPreviewMode(true);
+    }
+
+    Scene.clearTraces();
+    for (const tp of TRACE_POINTS) Scene.addTrace(tp.name, tp.color, 10000);
+}
+
+function stopExplorer() {
+    animator.stop();
+    explorerActive = false;
+    const btn = document.getElementById('btn-explore');
+    btn.classList.remove('exploring');
+
+    // Restore scene to current params
+    const data = localCompute(currentParams);
+    mechDef._paramValues = currentParams;
+    Scene.updateScene(data);
+    if (previewActive) Scene.updatePreviewGeometry(data);
+}
+
 // ── init ──
 async function init() {
     try {
@@ -123,12 +290,13 @@ async function init() {
     }
 
     for (const [k, v] of Object.entries(mechDef.growth_params)) currentParams[k] = v.value;
+    if (currentParams.psi === undefined) currentParams.psi = 0;
 
     UI.buildTree(mechDef.growth_tree, document.getElementById('tree-container'), selectNode);
     Scene.initScene(document.getElementById('viewport'), mechDef, selectNode);
 
     document.getElementById('btn-reset-cam')?.addEventListener('click', Scene.resetCamera);
-    document.querySelectorAll('.view-btns button').forEach(btn => {
+    document.querySelectorAll('.view-btns button[data-view]').forEach(btn => {
         btn.addEventListener('click', () => {
             const v = btn.dataset.view;
             if (v === 'home') { Scene.resetCamera(); return; }
@@ -139,13 +307,24 @@ async function init() {
     });
     document.getElementById('loading').classList.add('hidden');
     document.getElementById('status').textContent = 'Ready';
-    document.getElementById('footer').textContent = 'Ready';
 
     document.getElementById('btn-preview')?.addEventListener('click', togglePreview);
+    document.getElementById('btn-explore')?.addEventListener('click', toggleExplorer);
+
+    // Grid interaction (always active)
+    const gridCanvas = document.getElementById('grid-canvas');
+    let dragging = false;
+    gridCanvas.addEventListener('mousedown', (e) => { dragging = true; handleGridPointer(e); });
+    gridCanvas.addEventListener('mousemove', (e) => { if (dragging) handleGridPointer(e); });
+    gridCanvas.addEventListener('mouseup', () => { dragging = false; });
+    gridCanvas.addEventListener('mouseleave', () => { dragging = false; });
 
     mechDef._paramValues = currentParams;
     Scene.updateScene(localCompute(currentParams));
     await doServerCompute();
+
+    // Auto-compute grid after initial load
+    rebuildGrid();
 }
 
 function togglePreview() {

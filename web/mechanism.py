@@ -60,7 +60,7 @@ GROWTH_TREE = {
               "relation": "translate +X by L_cp",
               "params": ["L_cp"],
               "children": [
-                  {"name": "Rk", "type": "frame", "step": 3,
+                  {"name": "Rk", "type": "frame", "step": 3,  # rocker frame, P 点旋转后的坐标系
                    "relation": "rotate around X by theta",
                    "params": ["theta"],
                    "children": [
@@ -136,7 +136,7 @@ VIS_ELEMENTS = [
     {"id": "LF_line",          "type": "line",   "color": "#d4b870", "style": "passive", "from": "L", "to": "F"},
 ]
 
-FRAME_NAMES = ["B", "P", "Rk", "C", "E"]
+FRAME_NAMES = ["B", "P", "Rk", "C", "E"]  # Rk = P 点 rocker 坐标系（随 θ 旋转）
 
 RIGID_BODIES = [
     {"name": "arm", "label": "drive arm", "points": ["P", "A", "Q", "R", "L"],
@@ -146,22 +146,21 @@ RIGID_BODIES = [
     {"name": "plate", "label": "finger plate", "points": ["T", "U", "Q"], "color": "#cc6644"},
     {"name": "rod_r", "label": "right rod", "points": ["R", "D"], "color": "#888888"},
     {"name": "rod_l", "label": "left rod", "points": ["L", "F"], "color": "#888888"},
-    {"name": "base", "label": "base", "points": ["B", "P"], "color": "#888888"},
+    {"name": "base", "label": "base", "points": ["B"], "color": "#888888"},
     {"name": "servo_r", "label": "right servo horn", "points": ["C", "D"], "color": "#aa44aa"},
     {"name": "servo_l", "label": "left servo horn", "points": ["E", "F"], "color": "#aa44aa"},
 ]
 
 JOINTS = [
-    # ── revolute (rocker closed chain) ──
-    {"name": "j_p", "type": "revolute", "bodies": ["arm", "link"], "point": "P", "axis": "Y", "desc": "arm-link at P"},
+    # ── P点：三体共轴 (base/arm/link) ──
+    {"name": "j_b", "type": "revolute", "bodies": ["base", "arm"], "point": "P", "axis": "X", "desc": "base-arm at P (X-axis, bearing at B)"},
+    {"name": "j_p", "type": "revolute", "bodies": ["arm", "link"], "point": "P", "axis": "Y", "desc": "arm-link at P (Y-axis)"},
+    # ── revolute (arm-link-plate 三角闭环) ──
     {"name": "j_u", "type": "revolute", "bodies": ["link", "plate"], "point": "U", "axis": "Y", "desc": "link-plate at U"},
     {"name": "j_q", "type": "revolute", "bodies": ["plate", "arm"], "point": "Q", "axis": "Y", "desc": "plate-arm at Q"},
-    # ── revolute (base ↔ rocker at P) ──
-    {"name": "j_bp", "type": "revolute", "bodies": ["base", "arm"], "point": "P", "axis": "X", "desc": "base-arm at P (rocker)"},
-    {"name": "j_bu", "type": "revolute", "bodies": ["base", "link"], "point": "P", "axis": "X", "desc": "base-link at P (rocker)"},
     # ── revolute (servo rotation at C/E) ──
-    {"name": "j_cr", "type": "revolute", "bodies": ["servo_r"], "point": "C", "axis": "Y", "desc": "servo_r rotates at C"},
-    {"name": "j_el", "type": "revolute", "bodies": ["servo_l"], "point": "E", "axis": "Y", "desc": "servo_l rotates at E"},
+    {"name": "j_cr", "type": "revolute", "bodies": ["servo_r"], "point": "C", "axis": "X", "desc": "servo_r rotates at C"},
+    {"name": "j_el", "type": "revolute", "bodies": ["servo_l"], "point": "E", "axis": "X", "desc": "servo_l rotates at E"},
     # ── ball joint (servo ↔ rod) ──
     {"name": "j_dr", "type": "ball", "bodies": ["servo_r", "rod_r"], "point": "D", "desc": "servo_r-rod_r at D"},
     {"name": "j_fl", "type": "ball", "bodies": ["servo_l", "rod_l"], "point": "F", "desc": "servo_l-rod_l at F"},
@@ -201,11 +200,11 @@ def compute(params: dict[str, float]) -> dict:
     beta1 = math.radians(params["beta1"])
     beta2 = math.radians(params["beta2"])
 
-    # 固定点
+    # 固定点（B: 轴承座, P: 三体共轴点，在旋转轴线上位置不变）
     B_pos = np.array([0.0, 0.0, z0])
     P_pos = np.array([L_cp, 0.0, z0])
 
-    # 旋转子系统
+    # 摇臂旋转（轴承在 B，通过 BP 传动到 P，绕 X 轴旋转 θ）
     Rmat = _rot_x(theta)
     xA = L_A * math.sin(alpha)
     zA = L_A * math.cos(alpha)

@@ -30,10 +30,19 @@
             <button data-view="+Z" class="sep" title="View +Z">+Z</button>
             <button data-view="-Z" title="View -Z">-Z</button>
             <button id="btn-preview" class="sep" title="Toggle rigid body preview">RB</button>
+            <button id="btn-explore" class="sep" title="Motion exploration">&#9654;</button>
         </div>
     </div>
-    <div class="panel-params" id="panel-params">
-        <p class="no-selection">Select a step to view its parameters</p>
+    <div class="panel-right">
+        <div class="panel-params" id="panel-params">
+            <p class="no-selection">Select a step to view its parameters</p>
+        </div>
+        <div class="panel-grid">
+            <h2>Motion Range</h2>
+            <div class="grid-status" id="grid-status">Waiting...</div>
+            <canvas id="grid-canvas" width="256" height="256"></canvas>
+            <div class="grid-footer" id="grid-footer">β₁ / β₂ parameter space</div>
+        </div>
     </div>
 </div>
 
