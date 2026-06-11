@@ -209,7 +209,7 @@ KATLR 是最大的刚体，包含手指尖端板和横杆。
 | 10 | C (CD↔Ground) | CD ↔ Ground | Revolute (servo $\beta_1$) | 1 | 右舵机驱动 |
 | 11 | E (EF↔Ground) | EF ↔ Ground | Revolute (servo $\beta_2$) | 1 | 左舵机驱动 |
 
-**结构分解**：关节 1 是唯一的全局旋转（绕 AB，平行于 X），使整个手指子系统倾斜。关节 2-5 都是局部 Y 方向旋转，手指内部运动始终在局部 XZ 平面内。整个系统可分解为：全局倾斜 θ + 平面内四连杆运动 φ。
+**结构分解**：关节 1 是唯一的全局旋转（绕 AB，平行于 X），使整个手指子系统倾斜。关节 2-5 都是局部 Y 方向旋转，手指内部运动始终在局部 XZ 平面内。整个系统可分解为：全局倾斜 θ + 平面内四连杆运动 $\angle KAP$。
 
 ### 3.2 闭环结构
 
@@ -275,26 +275,32 @@ $$\mathbf{q}_{in} = (\beta_1,\ \beta_2)^T$$
 
 ### 4.2 被动变量
 
-$$\mathbf{q}_{passive} = (\theta,\ \varphi)^T$$
+$$\mathbf{q}_{passive} = (\theta,\ \angle KAP)^T$$
 
 - $\theta$ — APB 绕 AB 方向的旋转角（关节 1，轴承在 B 处）
-- $\varphi$ — 结构四连杆 P-A-K-Q-P 的内部运动变量
+- $\angle KAP$ — 关节 A 处 A→K 与 A→P 两方向之间的夹角（四连杆 P-A-K-Q-P 的被动变量）
 
-$\varphi$ 的物理含义：四连杆机构的 1 个内部自由度，表现为 KATLR（或等效地 UQK、QP）相对 APB 的旋转。
+**定义**：$\angle KAP$ 是关节 A 处的转角，表示 KATLR 刚体相对 APB 刚体的旋转。它唯一确定四连杆 P-A-K-Q-P 的构型。
 
-具体地，$\varphi$ 可以定义为 KATLR 上 K 点相对 A 点的角度偏离初始值的角度。设初始状态下 K 相对 A 的方向角为 $(\alpha + \gamma)_0$，则运动中：
+为方便公式推导，定义工作变量 $\kappa$（kappa）：
 
-$$(\alpha + \gamma)_{current} = (\alpha + \gamma)_0 + \varphi$$
+$$\kappa = 180° - \angle KAP$$
 
-等效地，$\varphi$ 改变了 KATLR 内各点（K, T, R, L）相对 A 的角度。
+$\kappa$ 是 A→K 方向从 +X 方向计量的方向角。初始值：
+
+$$\angle KAP_0 = 180° - (\alpha + \gamma) = 75°, \quad \kappa_0 = \alpha + \gamma = 105°$$
+
+运动中，$\kappa = \alpha + \gamma + \Delta$，其中 $\Delta$ 是偏离初始值的变化量。等效地，T 方向的有效角度为：
+
+$$\alpha' = \kappa - \gamma = \alpha + \Delta$$
 
 ### 4.3 两阶段求解
 
-**阶段 1 — 驱动系统**：给定 $(\beta_1, \beta_2)$，由连杆长度约束求解被动变量 $(\theta, \varphi)$。
+**阶段 1 — 驱动系统**：给定 $(\beta_1, \beta_2)$，由连杆长度约束求解被动变量 $(\theta, \angle KAP)$。
 
-$$\begin{cases} f_1(\theta, \varphi;\ \beta_1) = 0 \\ f_2(\theta, \varphi;\ \beta_2) = 0 \end{cases}$$
+$$\begin{cases} f_1(\theta, \angle KAP;\ \beta_1) = 0 \\ f_2(\theta, \angle KAP;\ \beta_2) = 0 \end{cases}$$
 
-**阶段 2 — 结构四连杆**：给定 $(\theta, \varphi)$，四连杆 P-A-K-Q-P 的几何完全确定，各点位置可解析计算。无需迭代求解。
+**阶段 2 — 结构四连杆**：给定 $(\theta, \angle KAP)$，计算 $\kappa = 180° - \angle KAP$，然后各点位置可直接解析计算。Q 的位置由 KQ 圆与 PQ 圆的交点确定（解析求解，无需迭代）。无需 Newton-Raphson。
 
 ---
 
@@ -316,49 +322,31 @@ $$A(\theta) = P + R_x(\theta) \cdot (L_{PA},\ 0,\ 0) = (L_{BP} + L_{PA},\ 0,\ z_
 
 #### 5.1.2 QP、UQK、KATLR 上的点
 
-四连杆 P-A-K-Q-P 的 1 个内部自由度 $\varphi$ 决定了 QP、UQK、KATLR 上各点的位置。
+四连杆 P-A-K-Q-P 的 1 个内部自由度（$\angle KAP$）决定了 QP、UQK、KATLR 上各点的位置。
 
-在初始状态（$\theta = 0, \varphi = 0$）下，所有点位于 XZ 平面。$\theta$ 旋转使整个系统绕 AB 方向倾斜，但 APB 上的 B、P、A 恰好在旋转轴上不动。
+在初始状态（$\theta = 0$）下，所有点位于 XZ 平面。$\theta$ 旋转使整个系统绕 AB 方向倾斜，但 APB 上的 B、P、A 恰好在旋转轴上不动。
 
-$\varphi$ 改变时，QP 在 P 处相对 APB 旋转，带动 UQK 和 KATLR。
+$\angle KAP$ 改变时，KATLR 在 A 处相对 APB 旋转，改变 K、T、R、L 的位置，并带动 UQK 和 QP。
 
-设 $\varphi$ 为 QP 相对 APB 在 P 处的旋转角（在初始 XZ 平面内计量），则 Q 的位置为：
+**K、T、R、L 的位置公式**（以 $\kappa = 180° - \angle KAP$ 为工作变量）：
 
-$$Q(\varphi) = P + R_y^{XZ}(\varphi) \cdot (0,\ 0,\ L_{PQ})$$
+$$K(\theta, \kappa) = A + R_x(\theta) \cdot \begin{pmatrix} L_{AK}\cos\kappa \\ 0 \\ L_{AK}\sin\kappa \end{pmatrix}$$
 
-其中 $R_y^{XZ}$ 表示在 XZ 平面内的旋转（绕 Y 轴），在初始状态下：
+$$= \begin{pmatrix} L_{BP} + L_{PA} + L_{AK}\cos\kappa \\ -L_{AK}\sin\kappa \cdot \sin\theta \\ z_0 + L_{AK}\sin\kappa \cdot \cos\theta \end{pmatrix}$$
 
-$$Q(\varphi) = (L_{BP} + L_{PQ}\sin\varphi,\ 0,\ z_0 + L_{PQ}\cos\varphi)$$
+其中 $\alpha' = \kappa - \gamma$（T 方向的有效角度），T、R、L 的位置为：
 
-当 $\theta$ 旋转也作用时，Q 的全局坐标为：
+$$T(\theta, \kappa) = A + R_x(\theta) \cdot \begin{pmatrix} L_{AT}\cos(\kappa-\gamma) \\ 0 \\ L_{AT}\sin(\kappa-\gamma) \end{pmatrix}$$
 
-$$Q(\theta, \varphi) = P + R_x(\theta) \cdot (L_{PQ}\sin\varphi,\ 0,\ L_{PQ}\cos\varphi)$$
+$$R(\theta, \kappa) = T + R_x(\theta) \cdot (0,\ \text{BarHalf},\ 0) = \begin{pmatrix} T_x \\ T_y + \text{BarHalf}\cos\theta \\ T_z + \text{BarHalf}\sin\theta \end{pmatrix}$$
 
-$$= \begin{pmatrix} L_{BP} + L_{PQ}\sin\varphi \\ -L_{PQ}\cos\varphi \cdot \sin\theta \\ z_0 + L_{PQ}\cos\varphi \cdot \cos\theta \end{pmatrix}$$
+$$L(\theta, \kappa) = T + R_x(\theta) \cdot (0,\ -\text{BarHalf},\ 0) = \begin{pmatrix} T_x \\ T_y - \text{BarHalf}\cos\theta \\ T_z - \text{BarHalf}\sin\theta \end{pmatrix}$$
 
-类似地，K 点在 KATLR 上，其位置由 A（固定）和 $\varphi$（通过四连杆传播）确定。设 $\varphi$ 的传播使得 K 相对 A 的有效角度为 $(\alpha + \gamma)_0 + \varphi'$，其中 $\varphi'$ 与 $\varphi$ 的关系由四连杆几何确定。
-
-**简记**：定义 $\phi = \varphi'$ 为 KATLR 的有效旋转角（KATLR 上各点相对 A 的角度偏离初始值的量）。
-
-则 K 的全局坐标为：
-
-$$K(\theta, \phi) = A + R_x(\theta) \cdot (L_{AK}\cos(\alpha+\gamma+\phi),\ 0,\ L_{AK}\sin(\alpha+\gamma+\phi))$$
-
-$$= \begin{pmatrix} L_{BP} + L_{PA} + L_{AK}\cos\eta \\ -L_{AK}\sin\eta \cdot \sin\theta \\ z_0 + L_{AK}\sin\eta \cdot \cos\theta \end{pmatrix}$$
-
-其中 $\eta = \alpha + \gamma + \phi$。
-
-T、R、L 点类似：
-
-$$T(\theta, \phi) = A + R_x(\theta) \cdot (L_{AT}\cos(\alpha+\phi),\ 0,\ L_{AT}\sin(\alpha+\phi))$$
-
-$$R(\theta, \phi) = T + R_x(\theta) \cdot (0,\ \text{BarHalf},\ 0) = \begin{pmatrix} T_x \\ T_y + \text{BarHalf}\cos\theta \\ T_z + \text{BarHalf}\sin\theta \end{pmatrix}$$
-
-$$L(\theta, \phi) = T + R_x(\theta) \cdot (0,\ -\text{BarHalf},\ 0) = \begin{pmatrix} T_x \\ T_y - \text{BarHalf}\cos\theta \\ T_z - \text{BarHalf}\sin\theta \end{pmatrix}$$
+**Q 的位置**：K 的位置已知后，Q 由两个圆的交点确定——以 K 为圆心、$L_{QK}$ 为半径的圆，以及以 P 为圆心、$L_{PQ}$ 为半径的圆。此为解析求解（至多 2 解，由装配构型选择唯一分支）。
 
 U 点由 Q 和 UQK 三角形确定：
 
-$$U(\theta, \varphi) = Q + R_x(\theta) \cdot (U_{rel,Q})$$
+$$U(\theta, \kappa) = Q + R_x(\theta) \cdot (U_{rel,Q})$$
 
 其中 $U_{rel,Q}$ 是 U 相对 Q 的固定向量（由三角形 UQK 的形状确定）。
 
@@ -378,13 +366,13 @@ $$F(\beta_2) = E + \begin{pmatrix} 0 \\ -R\sin\beta_2 \\ R\cos\beta_2 \end{pmatr
 
 球关节（R-D 处和 L-F 处）只传递距离约束。两根连杆必须保持恒定长度：
 
-$$\boxed{f_1(\theta, \phi;\ \beta_1) = \|R(\theta, \phi) - D(\beta_1)\|^2 - L_{rod\_r}^2 = 0}$$
+$$\boxed{f_1(\theta, \angle KAP;\ \beta_1) = \|R(\theta, \kappa) - D(\beta_1)\|^2 - L_{rod\_r}^2 = 0}$$
 
-$$\boxed{f_2(\theta, \phi;\ \beta_2) = \|L(\theta, \phi) - F(\beta_2)\|^2 - L_{rod\_l}^2 = 0}$$
+$$\boxed{f_2(\theta, \angle KAP;\ \beta_2) = \|L(\theta, \kappa) - F(\beta_2)\|^2 - L_{rod\_l}^2 = 0}$$
 
 ### 5.4 约束方程展开
 
-以下展开中记 $\alpha' = \alpha + \phi$，$\eta = \alpha + \gamma + \phi$。
+以下展开中记 $\kappa = 180° - \angle KAP$，$\alpha' = \kappa - \gamma$（T 方向的有效角度）。注意 $\alpha' = \alpha + \Delta$，其中 $\Delta = \kappa - \kappa_0$ 是偏离初始值的变化量。
 
 **R 点展开**：
 
@@ -440,37 +428,33 @@ $$\|KQ\| = L_{QK} \quad \text{(UQK 刚体)}$$
 
 $$\|QP\| = L_{PQ} \quad \text{(QP 刚体)}$$
 
-这四个约束由各刚体的内部几何自动满足。$\varphi$ 与 $\phi$ 的关系由四连杆的几何确定（见 5.6 节）。
-
-### 5.6 $\varphi$ 与 $\phi$ 的关系
-
-四连杆 P-A-K-Q-P 中，已知 P 和 A 的位置（固定），给定 QP 的旋转角 $\varphi$，可唯一确定 Q 的位置。然后由 UQK 刚体的 $\|QK\| = L_{QK}$ 和 KATLR 刚体的 $\|AK\| = L_{AK}$，K 的位置由两个圆的交点确定（至多 2 解，由装配构型选择）。
-
-但反过来，若以 $\phi$（KATLR 的旋转角）为变量，则 K 的位置已知，Q 的位置由 $\|KQ\| = L_{QK}$ 和 $\|QP\| = L_{PQ}$ 确定。两种参数化等价——选其一为独立变量，另一个由四连杆几何唯一确定。
-
-在约束方程 $f_1, f_2$ 中，我们选择 $\phi$ 作为独立变量（因为它直接出现在 R、L 的位置公式中），$\varphi$ 随之确定。
+这四个约束由各刚体的内部几何自动满足。$\angle KAP$ 唯一确定四连杆的构型：给定 $\angle KAP$，由 $\kappa = 180° - \angle KAP$ 直接计算 K 的位置，再由 KQ 圆和 PQ 圆的交点解析确定 Q 的位置。
 
 ---
 
 ## 6. 求解流程
 
-### 6.1 阶段 1 — Newton-Raphson 求解 $(\theta, \phi)$
+### 6.1 阶段 1 — Newton-Raphson 求解 $(\theta, \angle KAP)$
 
 给定输入 $(\beta_1, \beta_2)$，求解非线性方程组：
 
-$$\begin{cases} f_1(\theta, \phi;\ \beta_1) = 0 \\ f_2(\theta, \phi;\ \beta_2) = 0 \end{cases}$$
+$$\begin{cases} f_1(\theta, \angle KAP;\ \beta_1) = 0 \\ f_2(\theta, \angle KAP;\ \beta_2) = 0 \end{cases}$$
 
-**Jacobian 矩阵**：
+**Jacobian 矩阵**（以工作变量 $\kappa = 180° - \angle KAP$ 求偏导）：
 
-$$J = \begin{bmatrix} \dfrac{\partial f_1}{\partial \theta} & \dfrac{\partial f_1}{\partial \phi} \\[8pt] \dfrac{\partial f_2}{\partial \theta} & \dfrac{\partial f_2}{\partial \phi} \end{bmatrix}$$
+$$J = \begin{bmatrix} \dfrac{\partial f_1}{\partial \theta} & \dfrac{\partial f_1}{\partial \kappa} \\[8pt] \dfrac{\partial f_2}{\partial \theta} & \dfrac{\partial f_2}{\partial \kappa} \end{bmatrix}$$
+
+注意 $\dfrac{\partial f}{\partial (\angle KAP)} = -\dfrac{\partial f}{\partial \kappa}$（符号反转），实际求解中使用 $\kappa$ 作为变量。
 
 **迭代格式**：
 
-$$\begin{pmatrix} \theta \\ \phi \end{pmatrix}^{(k+1)} = \begin{pmatrix} \theta \\ \phi \end{pmatrix}^{(k)} - J^{-1} \begin{pmatrix} f_1 \\ f_2 \end{pmatrix}^{(k)}$$
+$$\begin{pmatrix} \theta \\ \kappa \end{pmatrix}^{(k+1)} = \begin{pmatrix} \theta \\ \kappa \end{pmatrix}^{(k)} - J^{-1} \begin{pmatrix} f_1 \\ f_2 \end{pmatrix}^{(k)}$$
+
+迭代收敛后，$\angle KAP = 180° - \kappa$。
 
 ### 6.2 Jacobian 解析表达式
 
-记 $\alpha' = \alpha + \phi$，$\alpha'$ 对 $\phi$ 的偏导为 $\frac{\partial \alpha'}{\partial \phi} = 1$。
+记 $\alpha' = \kappa - \gamma$，$\alpha'$ 对 $\kappa$ 的偏导为 $\frac{\partial \alpha'}{\partial \kappa} = 1$。
 
 #### $f_1$ 对 $\theta$ 的偏导
 
@@ -480,17 +464,19 @@ $$\frac{\partial \Delta z_1}{\partial \theta} = -L_{AT}\sin\alpha' \cdot \sin\th
 
 $$\frac{\partial f_1}{\partial \theta} = 2\left[\Delta y_1 \cdot \frac{\partial \Delta y_1}{\partial \theta} + \Delta z_1 \cdot \frac{\partial \Delta z_1}{\partial \theta}\right]$$
 
-#### $f_1$ 对 $\phi$ 的偏导
+#### $f_1$ 对 $\kappa$ 的偏导
 
-$$\frac{\partial \Delta x_1}{\partial \phi} = -L_{AT}\sin\alpha'$$
+$$\frac{\partial \Delta x_1}{\partial \kappa} = -L_{AT}\sin\alpha'$$
 
-$$\frac{\partial \Delta y_1}{\partial \phi} = -L_{AT}\cos\alpha' \cdot \sin\theta$$
+$$\frac{\partial \Delta y_1}{\partial \kappa} = -L_{AT}\cos\alpha' \cdot \sin\theta$$
 
-$$\frac{\partial \Delta z_1}{\partial \phi} = L_{AT}\cos\alpha' \cdot \cos\theta$$
+$$\frac{\partial \Delta z_1}{\partial \kappa} = L_{AT}\cos\alpha' \cdot \cos\theta$$
 
-$$\frac{\partial f_1}{\partial \phi} = 2\left[\Delta x_1 \cdot \frac{\partial \Delta x_1}{\partial \phi} + \Delta y_1 \cdot \frac{\partial \Delta y_1}{\partial \phi} + \Delta z_1 \cdot \frac{\partial \Delta z_1}{\partial \phi}\right]$$
+$$\frac{\partial f_1}{\partial \kappa} = 2\left[\Delta x_1 \cdot \frac{\partial \Delta x_1}{\partial \kappa} + \Delta y_1 \cdot \frac{\partial \Delta y_1}{\partial \kappa} + \Delta z_1 \cdot \frac{\partial \Delta z_1}{\partial \kappa}\right]$$
 
 $$= 2L_{AT}\left[-\Delta x_1 \sin\alpha' - \Delta y_1 \cos\alpha' \sin\theta + \Delta z_1 \cos\alpha' \cos\theta\right]$$
+
+注意 $\dfrac{\partial f_1}{\partial (\angle KAP)} = -\dfrac{\partial f_1}{\partial \kappa}$（符号反转）。
 
 #### $f_2$ 的偏导
 
@@ -502,18 +488,19 @@ $$\frac{\partial \Delta z_2}{\partial \theta} = -L_{AT}\sin\alpha' \cdot \sin\th
 
 $$\frac{\partial f_2}{\partial \theta} = 2\left[\Delta y_2 \cdot \frac{\partial \Delta y_2}{\partial \theta} + \Delta z_2 \cdot \frac{\partial \Delta z_2}{\partial \theta}\right]$$
 
-$$\frac{\partial f_2}{\partial \phi} = 2L_{AT}\left[-\Delta x_2 \sin\alpha' - \Delta y_2 \cos\alpha' \sin\theta + \Delta z_2 \cos\alpha' \cos\theta\right]$$
+$$\frac{\partial f_2}{\partial \kappa} = 2L_{AT}\left[-\Delta x_2 \sin\alpha' - \Delta y_2 \cos\alpha' \sin\theta + \Delta z_2 \cos\alpha' \cos\theta\right]$$
 
 ### 6.3 阶段 2 — 结构四连杆位置计算
 
-$(\theta, \phi)$ 求解完成后，所有点的位置可解析计算：
+$(\theta, \kappa)$ 求解完成后，$\angle KAP = 180° - \kappa$，所有点的位置可解析计算：
 
 1. **P**：固定点，$P = (L_{BP},\ 0,\ z_0)$
 2. **A**：固定点，$A = (L_{BP} + L_{PA},\ 0,\ z_0)$
-3. **Q**：由 $\varphi$（从 $\phi$ 经四连杆几何确定）计算
-4. **K**：由 $\phi$ 直接计算
-5. **U**：由 UQK 三角形（Q 已知，K 已知，三边固定）确定
-6. **T, R, L**：由 KATLR 刚体内部几何（K 已知，$\phi$ 已知）确定
+3. **K**：由 $\kappa$ 直接计算，$K = A + R_x(\theta) \cdot (L_{AK}\cos\kappa,\ 0,\ L_{AK}\sin\kappa)$
+4. **T**：由 $\alpha' = \kappa - \gamma$ 直接计算
+5. **Q**：由 KQ 圆和 PQ 圆的交点解析确定（已知 K 和 P 的位置）
+6. **U**：由 UQK 三角形（Q 已知，K 已知，三边固定）确定
+7. **R, L**：$T \pm R_x(\theta) \cdot (0,\ \text{BarHalf},\ 0)$
 
 ### 6.4 完整计算顺序
 
@@ -523,17 +510,17 @@ $(\theta, \phi)$ 求解完成后，所有点的位置可解析计算：
 | 2 | — | $A$ | $(L_{BP}+L_{PA},\ 0,\ z_0)$ | 固定 |
 | 3 | — | $D$ | $(x_e,\ y_e+R\sin\beta_1,\ z_e+R\cos\beta_1)$ | $\beta_1$ |
 | 4 | — | $F$ | $(x_e,\ -y_e-R\sin\beta_2,\ z_e+R\cos\beta_2)$ | $\beta_2$ |
-| 5 | 1 | $\theta, \phi$ | Newton-Raphson 求解 $f_1=f_2=0$ | $\beta_1, \beta_2$ |
-| 6 | 2 | $K$ | $A + R_x(\theta) \cdot (L_{AK}\cos(\alpha{+}\gamma{+}\phi),\ 0,\ L_{AK}\sin(\alpha{+}\gamma{+}\phi))$ | $\theta, \phi$ |
-| 7 | 2 | $Q$ | 由四连杆几何从 K, A, P 反解 | $\theta, \phi$ |
+| 5 | 1 | $\theta, \angle KAP$ | Newton-Raphson 求解 $f_1=f_2=0$（内部变量 $\kappa = 180° - \angle KAP$） | $\beta_1, \beta_2$ |
+| 6 | 2 | $K$ | $A + R_x(\theta) \cdot (L_{AK}\cos\kappa,\ 0,\ L_{AK}\sin\kappa)$ | $\theta, \kappa$ |
+| 7 | 2 | $Q$ | 由 KQ 圆与 PQ 圆交点解析计算 | $\theta, \kappa$ |
 | 8 | 2 | $U$ | 由 UQK 三角形从 Q, K 确定 | $Q, K$ |
-| 9 | 2 | $T$ | $A + R_x(\theta) \cdot (L_{AT}\cos(\alpha{+}\phi),\ 0,\ L_{AT}\sin(\alpha{+}\phi))$ | $\theta, \phi$ |
+| 9 | 2 | $T$ | $A + R_x(\theta) \cdot (L_{AT}\cos(\kappa{-}\gamma),\ 0,\ L_{AT}\sin(\kappa{-}\gamma))$ | $\theta, \kappa$ |
 | 10 | 2 | $R$ | $T + R_x(\theta) \cdot (0,\ \text{BarHalf},\ 0)$ | $T, \theta$ |
 | 11 | 2 | $L$ | $T + R_x(\theta) \cdot (0,\ -\text{BarHalf},\ 0)$ | $T, \theta$ |
 
 ### 6.5 多解与奇异点
 
-给定 $(\beta_1, \beta_2)$，约束 $f_1 = 0$ 和 $f_2 = 0$ 各定义 $\theta$-$\phi$ 平面上的一条曲线。两条曲线的交点即为解。
+给定 $(\beta_1, \beta_2)$，约束 $f_1 = 0$ 和 $f_2 = 0$ 各定义 $\theta$-$\kappa$ 平面上的一条曲线。两条曲线的交点即为解。
 
 - **解的数量**：通常 0、1、2 或 4 个，取决于参数
 - **解的选择**：由初始装配位置确定唯一分支（连续性条件）
@@ -546,10 +533,10 @@ $(\theta, \phi)$ 求解完成后，所有点的位置可解析计算：
 
 ### 7.1 从约束方程直接论证
 
-**广义坐标**：$\mathbf{q} = (\theta, \phi, \beta_1, \beta_2)$，共 4 个变量。
+**广义坐标**：$\mathbf{q} = (\theta, \angle KAP, \beta_1, \beta_2)$，共 4 个变量。
 
 - $\theta$ — APB 绕 AB 方向旋转角
-- $\phi$ — 结构四连杆内部自由度（KATLR 的有效旋转角）
+- $\angle KAP$ — 四连杆 P-A-K-Q-P 的关节角（KATLR 在 A 处的转角）
 - $\beta_1$ — 右舵机角度
 - $\beta_2$ — 左舵机角度
 
@@ -569,7 +556,7 @@ $$F_{4bar} = 3(n-1) - 2j = 3 \times 3 - 2 \times 4 = 1$$
 
 四连杆有 1 个内部自由度。当整体绕 +X 轴旋转 $\theta$ 时，四连杆的点被 $R_x(\theta)$ 作用，但内部 1 个自由度不变。
 
-因此，$\theta$ 和 $\phi$ 是独立的被动变量，总共需要 2 个约束方程来确定。
+因此，$\theta$ 和 $\angle KAP$ 是独立的被动变量，总共需要 2 个约束方程来确定。
 
 ### 7.3 过约束说明
 
@@ -602,10 +589,11 @@ Gruebler-Kutzbach 公式对本机构给出负值自由度（过约束），与�
 | $D$ | servo_arm_r | 右舵机臂端点 |
 | $F$ | servo_arm_l | 左舵机臂端点 |
 | $\theta$ | — | APB 绕 +X 轴旋转角 |
-| $\phi$ | — | 四连杆内部自由度 / KATLR 有效旋转角 |
+| $\angle KAP$ | — | 关节 A 处 A→K 与 A→P 之间的夹角 |
+| $\kappa$ | — | $180° - \angle KAP$，A→K 方向角（工作变量） |
 | $\beta_1$ | beta1 | 右舵机角度 |
 | $\beta_2$ | — | 左舵机角度（代码中与 beta1 对称） |
 | $\alpha$ | alpha | A→T 角度（从 +X 计量） |
 | $\gamma$ | gamma | A→K 角度（相对 A→T 方向） |
-| $\alpha'$ | — | $\alpha + \phi$，KATLR 上 T 的有效角度 |
-| $\eta$ | — | $\alpha + \gamma + \phi$，KATLR 上 K 的有效角度 |
+| $\alpha'$ | — | $\kappa - \gamma$，KATLR 上 T 的有效角度 |
+| $\eta$ | — | $\kappa$，KATLR 上 K 的方向角（= $180° - \angle KAP$） |
