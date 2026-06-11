@@ -71,7 +71,7 @@ const SECTIONS = [
       { type: 'math', latex: 'L_{UK} = \\|U_0 - K_0\\| \\quad \\text{--- UQK 三角形 UK 边长}' },
 
       { type: 'h3', text: '1.5 旋转矩阵' },
-      { type: 'p', text: 'X 轴旋转（轴承在 B 处，整体绕 +X 轴旋转）：' },
+      { type: 'p', text: 'AB 轴旋转（轴承在 B 处，APB 绕 AB 方向旋转；AB 平行于 +X，位于 z = z₀。等价于平移至 B 后施加 Rx(θ) 再平移回来）：' },
       { type: 'math', latex: 'R_x(\\theta) = \\begin{bmatrix} 1 & 0 & 0 \\\\ 0 & \\cos\\theta & -\\sin\\theta \\\\ 0 & \\sin\\theta & \\cos\\theta \\end{bmatrix}' },
 
       { type: 'h3', text: '1.6 初始配置下的关键点坐标' },
@@ -99,7 +99,7 @@ const SECTIONS = [
         '‖PA‖ = L_{PA}',
         '‖BA‖ = L_{BP} + L_{PA}（三点共线）',
       ]},
-      { type: 'p', text: '关键性质：APB 绕 +X 轴旋转 θ 后，B、P、A 三点均在旋转轴上（y=0），坐标不变。' },
+      { type: 'p', text: '关键性质：APB 绕 AB 轴旋转 θ 后，B、P、A 三点均在 AB 轴上（y=0, z=z₀），坐标不变。' },
 
       { type: 'h3', text: '2.2 QP — 臂延伸刚体（点 Q, P）' },
       { type: 'math', latex: 'Q_{local} = (0,\\ 0,\\ L_{PQ}), \\quad \\|PQ\\| = L_{PQ}' },
@@ -133,7 +133,7 @@ const SECTIONS = [
         type: 'table',
         headers: ['#', '关节', '连接刚体', '类型', 'DOF'],
         rows: [
-          ['1', 'B (轴承)', 'APB ↔ Ground', 'Revolute X', '1'],
+          ['1', 'B (轴承)', 'APB ↔ Ground', 'Revolute AB', '1'],
           ['2', 'P', 'APB ↔ QP', 'Revolute', '1'],
           ['3', 'A', 'APB ↔ KATLR', 'Revolute', '1'],
           ['4', 'Q', 'QP ↔ UQK', 'Revolute', '1'],
@@ -163,7 +163,7 @@ const SECTIONS = [
       { type: 'pre', text:
 `Ground (O, B, C, E 固定)
   │
-  ├──[Rev X, θ]── APB (B, P, A)
+  ├──[Rev AB, θ]── APB (B, P, A)
   │     │              │
   │     ├─[Rev]─ QP    └─[Rev]─ KATLR
   │     │          │              │    │
@@ -188,7 +188,7 @@ const SECTIONS = [
       { type: 'h3', text: '4.2 被动变量' },
       { type: 'math', latex: '\\mathbf{q}_{passive} = (\\theta,\\ \\phi)^T' },
       { type: 'ul', items: [
-        'θ — APB 绕 +X 轴的旋转角',
+        'θ — APB 绕 AB 方向的旋转角',
         'φ — 结构四连杆 P-A-K-Q-P 的内部自由度',
       ]},
       { type: 'p', text: 'φ 与 Phase 1 的 ψ（arm 绕 Y 轴旋转角）等价。' },
@@ -203,7 +203,7 @@ const SECTIONS = [
     title: '5. 约束方程',
     blocks: [
       { type: 'h3', text: '5.1 位置公式' },
-      { type: 'p', text: 'APB 上 B、P、A 均在旋转轴上，Rx(θ) 不改变其坐标。下游点受 θ 和 φ 影响。' },
+      { type: 'p', text: 'APB 上 B、P、A 均在 AB 轴上，Rx(θ) 不改变其坐标。下游点受 θ 和 φ 影响。' },
       { type: 'p', text: 'Q 的全局坐标：' },
       { type: 'math', latex: 'Q(\\theta, \\varphi) = \\begin{pmatrix} L_{BP} + L_{PQ}\\sin\\varphi \\\\ -L_{PQ}\\cos\\varphi \\cdot \\sin\\theta \\\\ z_0 + L_{PQ}\\cos\\varphi \\cdot \\cos\\theta \\end{pmatrix}' },
       { type: 'p', html: true, text: '记 α\' = α + φ，η = α + γ + φ。K、T、R、L 的全局坐标：' },
@@ -305,7 +305,7 @@ const SECTIONS = [
         type: 'table',
         headers: ['本模型', 'Phase 1', '含义'],
         rows: [
-          ['$\\theta$', '$\\theta$', '绕 +X 轴旋转'],
+          ['$\\theta$', '$\\theta$', '绕 AB 轴旋转'],
           ['$\\phi$', '$\\psi$', '内部角度变化'],
         ],
       },

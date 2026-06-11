@@ -64,7 +64,7 @@ $$\|TL\| = \|TR\| = \text{BarHalf} \quad \text{--- 横杆半宽}$$
 
 ### 1.5 旋转矩阵
 
-**X 轴旋转**（轴承在 B 处，通过 BP 杆传递到 P，整体绕 +X 轴旋转）：
+**AB 轴旋转**（轴承在 B 处，APB 刚体绕 AB 方向旋转；AB 平行于 +X，位于 $z = z_0$ 高度。数学上等价于平移至 B 后施加 $R_x(\theta)$ 再平移回来）：
 
 $$R_x(\theta) = \begin{bmatrix} 1 & 0 & 0 \\ 0 & \cos\theta & -\sin\theta \\ 0 & \sin\theta & \cos\theta \end{bmatrix}$$
 
@@ -102,7 +102,7 @@ $$F_0 = (x_e,\ -y_e - R\sin\beta_1,\ z_e + R\cos\beta_1)$$
 
 ### 2.1 APB — 基座刚体（点 B, P, A）
 
-APB 是连接轴承与手指机构的基座刚体，在 B 处通过轴承绕 +X 轴旋转。
+APB 是连接轴承与手指机构的基座刚体，在 B 处通过轴承绕 AB 方向旋转。
 
 在 APB 的局部坐标系中（原点 P，$\theta = 0$ 时）：
 
@@ -117,7 +117,7 @@ $$A_{local} = (L_{PA},\ 0,\ 0)$$
 - $\|PA\| = L_{PA}$
 - $\|BA\| = L_{BP} + L_{PA}$（三点共线，沿 +X 方向排列）
 
-**关键性质**：APB 绕 +X 轴旋转角度 $\theta$ 后，B 的全局坐标仍为 $(0, 0, z_0)$（因为 B 在旋转轴上，y=0, z=z₀，旋转不改变其位置）。P 和 A 的 Y、Z 坐标随 $\theta$ 变化。
+**关键性质**：APB 绕 AB 轴旋转角度 $\theta$ 后，B、P、A 三点均在旋转轴上（AB 方向，y=0, z=z₀），全局坐标不变。下游刚体（QP、UQK、KATLR）上的点绕此轴旋转。
 
 ### 2.2 QP — 臂延伸刚体（点 Q, P）
 
@@ -197,7 +197,7 @@ KATLR 是最大的刚体，包含手指尖端板和横杆。
 
 | # | 关节 | 连接刚体 | 类型 | 自由度 | 说明 |
 |---|------|---------|------|--------|------|
-| 1 | B (轴承) | APB ↔ Ground | Revolute X | 1 | APB 绕 +X 轴旋转 |
+| 1 | B (轴承) | APB ↔ Ground | Revolute X | 1 | APB 绕 AB 方向旋转 |
 | 2 | P (APB↔QP) | APB ↔ QP | Revolute | 1 | QP 相对 APB 旋转 |
 | 3 | A (APB↔KATLR) | APB ↔ KATLR | Revolute | 1 | KATLR 相对 APB 在 A 处旋转 |
 | 4 | Q (QP↔UQK) | QP ↔ UQK | Revolute | 1 | UQK 相对 QP 旋转 |
@@ -275,7 +275,7 @@ $$\mathbf{q}_{in} = (\beta_1,\ \beta_2)^T$$
 
 $$\mathbf{q}_{passive} = (\theta,\ \varphi)^T$$
 
-- $\theta$ — APB 绕 +X 轴的旋转角（关节 1，轴承在 B 处）
+- $\theta$ — APB 绕 AB 方向的旋转角（关节 1，轴承在 B 处）
 - $\varphi$ — 结构四连杆 P-A-K-Q-P 的内部运动变量
 
 $\varphi$ 的物理含义：四连杆机构的 1 个内部自由度，表现为 KATLR（或等效地 UQK、QP）相对 APB 的旋转。它与 Phase 1 模型中的 $\psi$（arm 绕 Y 轴旋转角）等价。
@@ -302,21 +302,21 @@ $$\begin{cases} f_1(\theta, \varphi;\ \beta_1) = 0 \\ f_2(\theta, \varphi;\ \bet
 
 #### 5.1.1 APB 刚体上的点
 
-APB 绕 +X 轴旋转 $\theta$，以 P 为参考点（P 在旋转轴上，y=0, z=z₀）：
+APB 绕 AB 方向旋转 $\theta$，以 P 为参考点（P 在 AB 轴上，y=0, z=z₀）：
 
 $$A(\theta) = P + R_x(\theta) \cdot (L_{PA},\ 0,\ 0) = (L_{BP} + L_{PA},\ 0,\ z_0)$$
 
 由于 $A_{local} = (L_{PA},\ 0,\ 0)$ 的 Y 和 Z 分量均为零，$R_x(\theta)$ 作用后不改变其位置。即 **A 点在 $\theta$ 旋转下不动**。
 
-验证：$R_x(\theta) \cdot (L_{PA}, 0, 0) = (L_{PA}, 0, 0)$，正确。A 始终在旋转轴上（y=0, z=z₀）。
+验证：$R_x(\theta) \cdot (L_{PA}, 0, 0) = (L_{PA}, 0, 0)$，正确。A 始终在 AB 轴上（y=0, z=z₀）。
 
-同理，P 和 B 也在旋转轴上，$\theta$ 旋转不改变它们的坐标。
+同理，P 和 B 也在 AB 轴上，$\theta$ 旋转不改变它们的坐标。
 
 #### 5.1.2 QP、UQK、KATLR 上的点
 
 四连杆 P-A-K-Q-P 的 1 个内部自由度 $\varphi$ 决定了 QP、UQK、KATLR 上各点的位置。
 
-在初始状态（$\theta = 0, \varphi = 0$）下，所有点位于 XZ 平面。$\theta$ 旋转使整个系统绕 +X 轴倾斜，但 APB 上的 B、P、A 恰好在旋转轴上不动。
+在初始状态（$\theta = 0, \varphi = 0$）下，所有点位于 XZ 平面。$\theta$ 旋转使整个系统绕 AB 方向倾斜，但 APB 上的 B、P、A 恰好在旋转轴上不动。
 
 $\varphi$ 改变时，QP 在 P 处相对 APB 旋转，带动 UQK 和 KATLR。
 
@@ -546,7 +546,7 @@ $(\theta, \phi)$ 求解完成后，所有点的位置可解析计算：
 
 **广义坐标**：$\mathbf{q} = (\theta, \phi, \beta_1, \beta_2)$，共 4 个变量。
 
-- $\theta$ — APB 绕 +X 轴旋转角
+- $\theta$ — APB 绕 AB 方向旋转角
 - $\phi$ — 结构四连杆内部自由度（KATLR 的有效旋转角）
 - $\beta_1$ — 右舵机角度
 - $\beta_2$ — 左舵机角度
@@ -596,7 +596,7 @@ Gruebler-Kutzbach 公式对本机构给出负值自由度（过约束），与�
 
 1. 结构四连杆 4 个旋转关节的轴线方向有附加约束（初始状态下均在 XZ 平面内共面）
 2. 左右对称驱动链共享 KATLR 刚体和 APB 刚体
-3. B 和 P 均在旋转轴线上（y=0），使得 $R_x(\theta)$ 对 APB 上 B、P、A 三点无位移效果
+3. B 和 P 均在 AB 轴线上（y=0），使得 $R_x(\theta)$ 对 APB 上 B、P、A 三点无位移效果
 
 由于过约束存在，GK 公式不适用于本机构，直接从约束方程分析更可靠。
 
