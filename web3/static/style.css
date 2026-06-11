@@ -5,9 +5,10 @@ body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: #
 .header h1 { font-size: 15px; font-weight: 600; }
 .header .status { margin-left: auto; font-size: 12px; color: #999; }
 
-.main { height: calc(100vh - 44px); }
+.main { display: flex; height: calc(100vh - 44px); }
 
-.viewport { width: 100%; height: 100%; position: relative; overflow: hidden; }
+.viewport { flex: 0 0 100%; height: 100%; position: relative; overflow: hidden; transition: flex-basis 0.4s ease; }
+.viewport.shrunk { flex: 0 0 50%; }
 .viewport canvas { display: block; }
 
 /* View buttons */
@@ -87,3 +88,51 @@ body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: #
 .rod-dot { width: 6px; height: 6px; border-radius: 50%; background: #44aa88; flex-shrink: 0; }
 .rod-name { font-weight: 600; color: #44aa88; }
 .rod-val { margin-left: auto; font-family: "SF Mono", Menlo, monospace; color: #888; font-size: 10px; }
+
+/* Math drawer */
+.math-drawer {
+  flex: 0 0 0%; overflow: hidden;
+  transition: flex-basis 0.4s ease;
+  background: #fff; border-left: 1px solid #ddd;
+}
+.math-drawer.open { flex: 0 0 50%; }
+.math-drawer-inner {
+  width: 50vw; height: 100%; overflow-y: auto; padding: 20px 24px;
+  font-size: 14px; line-height: 1.7;
+}
+.math-drawer-inner h2 {
+  font-size: 16px; font-weight: 700; margin: 20px 0 8px; padding: 8px 0;
+  border-bottom: 2px solid #4488ff; cursor: pointer; user-select: none;
+  display: flex; align-items: center; gap: 8px;
+}
+.math-drawer-inner h2:first-child { margin-top: 0; }
+.math-drawer-inner h2::before {
+  content: '▸'; font-size: 12px; color: #4488ff; transition: transform 0.2s;
+  display: inline-block; width: 14px;
+}
+.math-drawer-inner h2.expanded::before { transform: rotate(90deg); }
+.math-drawer-inner h3 {
+  font-size: 14px; font-weight: 600; margin: 14px 0 6px; color: #555;
+}
+.math-drawer-inner p { margin: 6px 0; }
+.math-drawer-inner .math-block {
+  margin: 10px 0; padding: 8px 12px; background: #f8f9fa; border-radius: 4px;
+  overflow-x: auto; text-align: center;
+}
+.math-drawer-inner .math-inline { display: inline; }
+.math-drawer-inner table {
+  width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 13px;
+}
+.math-drawer-inner th, .math-drawer-inner td {
+  padding: 4px 8px; border: 1px solid #ddd; text-align: left;
+}
+.math-drawer-inner th { background: #f0f0f0; font-weight: 600; }
+.math-drawer-inner pre {
+  background: #f8f9fa; padding: 10px; border-radius: 4px; font-size: 12px;
+  font-family: "SF Mono", Menlo, monospace; overflow-x: auto; margin: 8px 0;
+  line-height: 1.5;
+}
+.math-drawer-inner .section-body { display: none; }
+.math-drawer-inner .section-body.open { display: block; }
+.math-drawer-inner ul { margin: 4px 0 4px 20px; }
+.math-drawer-inner li { margin: 2px 0; }
