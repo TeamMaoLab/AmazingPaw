@@ -1,10 +1,9 @@
 /**
- * Mode manager — coordinates Design / Kinematic / Grid mode switching.
+ * Mode manager — coordinates Design / Grid mode switching.
  */
 import { S, rebuildScene } from './state.js';
 import { solve, forwardPositions, computeGrid } from './solver.js';
 import { updatePositions, computeDesignPositions as getDesignPos } from './scene-builder.js';
-import { initKinematicUI, showKinematicPanel, hideKinematicPanel, syncSliders } from './kinematic-ui.js';
 import { showGridPanel, hideGridPanel, drawGrid } from './grid-mode.js';
 
 function dist(a, b) {
@@ -13,7 +12,6 @@ function dist(a, b) {
 }
 
 function inheritRodLengths() {
-  // Use saved design betas so rod lengths are independent of grid/kinematic exploration
   const savedB1 = S.params.beta1, savedB2 = S.params.beta2;
   S.params.beta1 = S.designBetas.beta1;
   S.params.beta2 = S.designBetas.beta2;
@@ -40,12 +38,9 @@ export function switchMode(newMode) {
   if (S.mode === newMode) return;
 
   // ── Cleanup current mode ──
-  if (S.mode === 'kinematic') {
-    hideKinematicPanel();
-    stopAnimation();
-  }
   if (S.mode === 'grid') {
     hideGridPanel();
+    stopAnimation();
   }
 
   // ── Enter new mode ──
@@ -53,13 +48,11 @@ export function switchMode(newMode) {
     S.mode = 'design';
     S.kinematicPositions = null;
     S.solverResult = null;
-    // Restore design betas — grid/kinematic may have modified them
     if (S.designBetas) {
       S.params.beta1 = S.designBetas.beta1;
       S.params.beta2 = S.designBetas.beta2;
     }
     S.designBetas = null;
-    // Invalidate grid — structural params may have changed
     S.gridData = null;
     enableTreeEditing();
     enableAnnotations();
@@ -68,29 +61,7 @@ export function switchMode(newMode) {
     updateModeTabs('design');
   }
 
-  if (newMode === 'kinematic') {
-    // Save design betas on first exit from design mode
-    if (S.mode === 'design') {
-      S.designBetas = { beta1: S.params.beta1, beta2: S.params.beta2 };
-    }
-    inheritRodLengths();
-    if (!doInitialSolve()) {
-      showStatusError('Cannot solve for current parameters');
-      updateModeTabs('design');
-      return;
-    }
-    S.mode = 'kinematic';
-    disableTreeEditing();
-    disableAnnotations();
-    hideTree();
-    rebuildScene();
-    showKinematicPanel();
-    syncSliders();
-    updateModeTabs('kinematic');
-  }
-
   if (newMode === 'grid') {
-    // Save design betas on first exit from design mode
     if (S.mode === 'design') {
       S.designBetas = { beta1: S.params.beta1, beta2: S.params.beta2 };
     }
@@ -100,7 +71,6 @@ export function switchMode(newMode) {
     disableAnnotations();
     hideTree();
     showGridPanel();
-    // Always recompute grid — params may have changed since last visit
     startGridComputation();
     updateModeTabs('grid');
   }

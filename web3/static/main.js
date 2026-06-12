@@ -8,7 +8,6 @@ import { initScene } from './scene-builder.js';
 import { buildGrowthTree, bindViewportClick, bindViewButtons } from './ui.js';
 import { initMathDrawer } from './math-drawer.js';
 import { bindModeTabs } from './mode-manager.js';
-import { initKinematicUI } from './kinematic-ui.js';
 
 async function init() {
   S.params = flattenParams();
@@ -20,7 +19,6 @@ async function init() {
   buildGrowthTree();
   bindViewportClick();
   bindModeTabs();
-  initKinematicUI();
   bindSaveButton();
   rebuildScene();
   initMathDrawer();
