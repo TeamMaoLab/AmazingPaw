@@ -56,12 +56,16 @@ jupyter notebook notebook/finger_build.ipynb
 - Rod length stability: design betas saved/restored on mode switch
 - FastAPI server with /api/params persistence (JSON file), Save Params button
 - Math drawer camera sync: RAF loop during CSS transition eliminates viewport stretch
+- Workspace surface: 3D visualization of U (link_joint) reachable manifold
+  - Point cloud colored by β₂ (jet colormap), stride-based wireframe grid lines (~5°)
+  - White marker sphere at current U, follows heatmap drag in real-time
+  - Built from grid data after computation, removed on mode switch
 - Launch: `uv run web3/server.py` → http://localhost:8002/static/index.html
 
-### Phase 5 — Mechanical design integration (next)
-- Export mechanism geometry for CAD/manufacturing
-- Tolerance analysis: parameter sensitivity of workspace
-- Compare solver results with Phase 1 for validation
+### Phase 5 — IK + camera-driven control (next)
+- IK solver: damped least squares, outer loop over (β₁, β₂), inner loop reuses Newton-Raphson
+- IK mode UI: drag target point in 3D, solve for servo angles
+- Camera hand tracking: MediaPipe Hands → finger pose → IK → real-time mechanism drive
 
 ## Active tool: web3
 
@@ -81,6 +85,7 @@ Single-page app, no build tools. Modular ES modules:
 | `solver.js` | Newton-Raphson solver, forwardPositions, grid computation |
 | `mode-manager.js` | Design/Grid mode switching, rod length inheritance, grid orchestration |
 | `grid-mode.js` | β₁×β₂ heatmap rendering, pointer interaction |
+| `workspace.js` | U workspace surface visualization (point cloud + wireframe + marker) |
 | `math-drawer.js` | Right-half KaTeX panel with SVG topology diagram |
 | `style.css` | Layout + drawer transition + annotation styles |
 | `index.html` | Page structure, mode tabs, save button, KaTeX CDN |
