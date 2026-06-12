@@ -1,5 +1,9 @@
 # Hands — Robotic Finger Mechanism
 
+English | [中文](README_CN.md)
+
+**Live Demo**: [https://amazing-paw.netlify.app/](https://amazing-paw.netlify.app/)
+
 Parametric 3D skeleton sketch + kinematic solver for a servo-driven mechanical finger with ball-link connections.
 
 ## Features
