@@ -124,6 +124,7 @@ const _oef = {
 
 let _calibBase = null;
 const _calibState = { phase: 'idle', t0: 0, samples: [] };
+let _stopped = false;
 
 // Finger skeleton for overlay drawing
 const FINGER_GROUPS = [
@@ -180,39 +181,63 @@ async function _initMediaPipe() {
   }
 }
 
-// ─── DOM: create video overlay ───
+// ─── DOM: create floating track widget (video + panel) ───
 
 function _createVideoOverlay() {
   const viewport = document.getElementById('viewport');
 
-  // Container
-  const wrap = document.createElement('div');
-  wrap.id = 'track-video-wrap';
-  wrap.style.cssText = 'position:absolute;bottom:12px;left:12px;z-index:10;border-radius:8px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.25);line-height:0;';
+  // Outer container — holds video and info panel side by side
+  const container = document.createElement('div');
+  container.id = 'track-widget';
+  container.style.cssText = 'position:absolute;bottom:12px;left:12px;z-index:10;display:flex;gap:0;border-radius:8px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.25);';
 
-  // Video
+  // Video wrapper
+  const videoWrap = document.createElement('div');
+  videoWrap.style.cssText = 'position:relative;line-height:0;';
+
   const video = document.createElement('video');
   video.id = 'track-video';
   video.autoplay = true;
   video.playsInline = true;
   video.muted = true;
-  video.style.cssText = 'width:320px;height:240px;transform:scaleX(-1);background:#000;';
+  video.style.cssText = 'width:320px;height:240px;transform:scaleX(-1);background:#000;display:block;';
   _videoEl = video;
 
-  // Overlay canvas
   const overlay = document.createElement('canvas');
   overlay.id = 'track-overlay';
   overlay.style.cssText = 'position:absolute;top:0;left:0;width:320px;height:240px;transform:scaleX(-1);pointer-events:none;';
   _overlayEl = overlay;
 
-  wrap.appendChild(video);
-  wrap.appendChild(overlay);
-  viewport.appendChild(wrap);
+  videoWrap.appendChild(video);
+  videoWrap.appendChild(overlay);
+
+  // Info panel
+  const panel = document.createElement('div');
+  panel.id = 'track-panel';
+  panel.className = 'track-panel';
+  panel.style.cssText = 'position:static;min-width:140px;';
+  panel.innerHTML = `
+    <div class="track-header">
+      <span class="track-title">Hand Tracking</span>
+      <span class="track-status" id="track-status">--</span>
+    </div>
+    <div class="track-body">
+      <div class="track-row"><span class="track-label">Hand</span><span class="track-value" id="track-hand">--</span></div>
+      <div class="track-row"><span class="track-label">FPS</span><span class="track-value" id="track-fps">--</span></div>
+      <div class="track-row"><span class="track-label">β₁</span><span class="track-value" id="track-beta1">--</span></div>
+      <div class="track-row"><span class="track-label">β₂</span><span class="track-value" id="track-beta2">--</span></div>
+    </div>
+    <button class="track-stop-btn" id="track-stop-btn">Stop</button>
+  `;
+
+  container.appendChild(videoWrap);
+  container.appendChild(panel);
+  viewport.appendChild(container);
 }
 
 function _removeVideoOverlay() {
-  const wrap = document.getElementById('track-video-wrap');
-  if (wrap) wrap.remove();
+  const el = document.getElementById('track-widget');
+  if (el) el.remove();
   _videoEl = null;
   _overlayEl = null;
 }
@@ -407,13 +432,9 @@ function _drawCalibProgress(ctx, W, H) {
 
 // ─── Panel helpers ───
 
-function _showPanel() {
-  document.getElementById('track-panel')?.classList.remove('hidden');
-}
+function _showPanel() {}
 
-function _hidePanel() {
-  document.getElementById('track-panel')?.classList.add('hidden');
-}
+function _hidePanel() {}
 
 function _setText(id, text) {
   const el = document.getElementById(id);
@@ -425,21 +446,23 @@ function _setText(id, text) {
 function _detectLoop() {
   const now = performance.now();
 
-  _fpsFrames++;
-  if (now - _fpsStart >= 1000) {
-    _fps = _fpsFrames;
-    _fpsFrames = 0;
-    _fpsStart = now;
-    _setText('track-fps', `${_fps} FPS`);
-  }
+  if (!_stopped) {
+    _fpsFrames++;
+    if (now - _fpsStart >= 1000) {
+      _fps = _fpsFrames;
+      _fpsFrames = 0;
+      _fpsStart = now;
+      _setText('track-fps', `${_fps} FPS`);
+    }
 
-  if (_videoEl && _videoEl.readyState >= 2 && _videoEl.currentTime !== _lastVideoTime) {
-    _lastVideoTime = _videoEl.currentTime;
-    try {
-      const result = _handLandmarker.detectForVideo(_videoEl, now);
-      _processResult(result);
-    } catch (e) {
-      _setText('track-status', `Error: ${e.message}`);
+    if (_videoEl && _videoEl.readyState >= 2 && _videoEl.currentTime !== _lastVideoTime) {
+      _lastVideoTime = _videoEl.currentTime;
+      try {
+        const result = _handLandmarker.detectForVideo(_videoEl, now);
+        _processResult(result);
+      } catch (e) {
+        _setText('track-status', `Error: ${e.message}`);
+      }
     }
   }
 
@@ -625,6 +648,7 @@ export function exitTrackMode() {
   _removeVideoOverlay();
 
   // Reset state
+  _stopped = false;
   _calibState.phase = 'idle';
   _calibState.t0 = 0;
   _calibState.samples = [];
@@ -633,4 +657,41 @@ export function exitTrackMode() {
   _lastVideoTime = -1;
 
   _hidePanel();
+}
+
+export async function toggleTrackPause() {
+  const btn = document.getElementById('track-stop-btn');
+  if (!_stopped) {
+    // Stop camera
+    _stopped = true;
+    _stopCamera();
+    btn.textContent = 'Resume';
+    btn.classList.add('stopped');
+    btn.disabled = true;
+    _setText('track-status', 'Camera off');
+    _setText('track-fps', '--');
+  } else {
+    // Resume camera
+    btn.textContent = 'Starting...';
+    btn.disabled = true;
+    try {
+      await _startCamera();
+      _stopped = false;
+      btn.textContent = 'Stop';
+      btn.classList.remove('stopped');
+      _setText('track-status', 'Tracking');
+      _fpsFrames = 0;
+      _fpsStart = performance.now();
+    } catch (e) {
+      _setText('track-status', `Camera error: ${e.message}`);
+      btn.textContent = 'Resume';
+      btn.classList.add('stopped');
+    }
+    btn.disabled = false;
+  }
+}
+
+export function bindTrackControls() {
+  const btn = document.getElementById('track-stop-btn');
+  if (btn) btn.addEventListener('click', toggleTrackPause);
 }

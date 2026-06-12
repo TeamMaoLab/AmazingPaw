@@ -7,7 +7,7 @@ import { updatePositions, computeDesignPositions as getDesignPos } from './scene
 import { showGridPanel, hideGridPanel, drawGrid } from './grid-mode.js';
 import { buildWorkspaceSurface, removeWorkspaceSurface } from './workspace.js';
 import { enterIKMode, exitIKMode } from './ik-mode.js';
-import { enterTrackMode, exitTrackMode } from './hand-track-mode.js';
+import { enterTrackMode, exitTrackMode, bindTrackControls } from './hand-track-mode.js';
 
 function dist(a, b) {
   const dx = a[0] - b[0], dy = a[1] - b[1], dz = a[2] - b[2];
@@ -130,6 +130,7 @@ export function switchMode(newMode) {
       buildWorkspaceSurface();
     }
     enterTrackMode();
+    bindTrackControls();
     updateModeTabs('track');
   }
 }
@@ -189,6 +190,8 @@ function updateModeTabs(mode) {
   document.querySelectorAll('.mode-tab').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.mode === mode);
   });
+  const saveBtn = document.getElementById('save-params-btn');
+  if (saveBtn) saveBtn.style.display = mode === 'design' ? '' : 'none';
 }
 
 function hideTree() {
