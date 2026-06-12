@@ -637,6 +637,10 @@ export async function enterTrackMode() {
     _setText('track-status', 'No grid data — switch to Grid mode first');
   }
 
+  // Bind Stop/Resume button after DOM is created
+  const stopBtn = document.getElementById('track-stop-btn');
+  if (stopBtn) stopBtn.addEventListener('click', toggleTrackPause);
+
   _setText('track-status', 'Tracking');
   _fpsStart = performance.now();
   _rafId = requestAnimationFrame(_detectLoop);
