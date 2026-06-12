@@ -1,6 +1,7 @@
 /**
  * Workspace surface — visualizes U (link_joint) reachable manifold.
  * Point cloud colored by β₂ (jet colormap) + stride-based wireframe grid lines.
+ * Also provides nearest-neighbor lookup for IK drag interaction.
  */
 import * as THREE from './lib/three.module.js';
 import { S } from './state.js';
@@ -9,6 +10,10 @@ import { forwardPositions } from './solver.js';
 let _pointCloud = null;
 let _wireframe = null;
 let _marker = null;
+
+// Grid lookup data for nearest-neighbor search
+let _uMap = null;       // Array of [x,y,z] or null, indexed by row*res+col
+let _gridMeta = null;   // { grid, res, from, to, step }
 
 function jetColor(t) {
   t = Math.max(0, Math.min(1, t));
@@ -20,11 +25,12 @@ function jetColor(t) {
   return [r, g, b];
 }
 
-export function buildWorkspaceSurface() {
+export function buildWorkspaceSurface(gridData) {
   removeWorkspaceSurface();
-  if (!S.gridData) return;
+  const data = gridData || S.gridData;
+  if (!data) return;
 
-  const { grid, res, from, to, step } = S.gridData;
+  const { grid, res, from, to, step } = data;
   const p = S.params;
 
   // Compute U positions for all valid cells
@@ -39,6 +45,10 @@ export function buildWorkspaceSurface() {
       uMap[row * res + col] = pos.link_joint;
     }
   }
+
+  // Store for nearest-neighbor lookup
+  _uMap = uMap;
+  _gridMeta = { grid, res, from, to, step };
 
   // Point cloud — one colored dot per valid cell
   const ptArr = [], colArr = [];
@@ -109,4 +119,43 @@ export function removeWorkspaceSurface() {
     }
   }
   _pointCloud = _wireframe = _marker = null;
+  _uMap = null;
+  _gridMeta = null;
+}
+
+/**
+ * Find the grid point on the workspace surface closest to `target`.
+ * Returns { beta1, beta2, theta, phi, positions, error, U } or null.
+ */
+export function findNearestU(target) {
+  if (!_uMap || !_gridMeta) return null;
+
+  const { grid, res, from, step } = _gridMeta;
+  let bestDist = Infinity;
+  let bestIdx = -1;
+
+  for (let i = 0; i < _uMap.length; i++) {
+    const u = _uMap[i];
+    if (!u) continue;
+    const dx = u[0] - target[0], dy = u[1] - target[1], dz = u[2] - target[2];
+    const d = dx * dx + dy * dy + dz * dz;
+    if (d < bestDist) {
+      bestDist = d;
+      bestIdx = i;
+    }
+  }
+
+  if (bestIdx < 0) return null;
+
+  const row = Math.floor(bestIdx / res);
+  const col = bestIdx % res;
+  const beta1 = from + col * step;
+  const beta2 = from + row * step;
+  const gridIdx = (row * res + col) * 3;
+  const theta = grid[gridIdx];
+  const phi = grid[gridIdx + 1];
+  const pos = forwardPositions({ ...S.params, beta1, beta2 }, theta, phi);
+  const U = pos.link_joint;
+
+  return { beta1, beta2, theta, phi, positions: pos, error: Math.sqrt(bestDist), U };
 }

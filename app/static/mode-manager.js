@@ -98,14 +98,9 @@ export function switchMode(newMode) {
       return;
     }
     rebuildScene();
-    if (S.gridData) {
-      buildWorkspaceSurface();
-      enterIKMode();
-    } else {
-      // Auto-compute coarse grid (5° step) for workspace surface
-      startIKGridComputation();
-      enterIKMode();
-    }
+    // IK always uses its own coarse grid for workspace surface
+    startIKGridComputation();
+    enterIKMode();
     updateModeTabs('ik');
   }
 }
@@ -126,12 +121,9 @@ function getGridParams() {
 
 function startIKGridComputation() {
   const p = S.params;
-  const from = 0, to = 180, step = 5;
-  const res = Math.round((to - from) / step) + 1;
 
-  computeGrid(p, S.solverRodLengths.L_RD2, S.solverRodLengths.L_LF2, from, to, step).then(data => {
-    S.gridData = data;
-    buildWorkspaceSurface();
+  computeGrid(p, S.solverRodLengths.L_RD2, S.solverRodLengths.L_LF2, 0, 180, 2).then(data => {
+    buildWorkspaceSurface(data);
   });
 }
 
