@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hand Tracking Experiment</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #1a1a2e; color: #ccc; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; }
+.header { display: flex; align-items: center; padding: 10px 20px; background: #16213e; border-bottom: 1px solid #233; gap: 16px; }
+.header h1 { font-size: 15px; color: #fff; }
+.stats { margin-left: auto; display: flex; gap: 20px; font-size: 12px; color: #888; }
+.container { display: flex; height: calc(100vh - 42px); }
+.left { flex: 0 0 640px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; background: #0a0a1a; }
+.video-wrap { position: relative; line-height: 0; }
+#video { width: 640px; height: 480px; transform: scaleX(-1); background: #000; }
+#overlay { position: absolute; top: 0; left: 0; width: 640px; height: 480px; transform: scaleX(-1); pointer-events: none; }
+#loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 15px; background: rgba(0,0,0,0.85); padding: 24px 36px; border-radius: 10px; z-index: 10; text-align: center; line-height: 1.6; max-width: 400px; }
+.right { flex: 1; padding: 14px; overflow-y: auto; }
+.panel { background: #16213e; border-radius: 8px; padding: 14px; margin-bottom: 10px; }
+.panel h3 { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+.row { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px solid #1a2744; }
+.row:last-child { border-bottom: none; }
+.val { color: #4fc3f7; font-weight: bold; }
+.warn { color: #ff6b6b; }
+canvas.panel-canvas { display: block; margin: 0 auto; border-radius: 4px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>Hand Tracking Experiment</h1>
+  <div class="stats">
+    <span id="fps">-- FPS</span>
+    <span id="handedness">--</span>
+    <span id="status">Waiting</span>
+  </div>
+</div>
+<div class="container">
+  <div class="left">
+    <div class="video-wrap">
+      <video id="video" autoplay playsinline></video>
+      <canvas id="overlay"></canvas>
+      <div id="loading">Loading MediaPipe...</div>
+    </div>
+  </div>
+  <div class="right">
+    <div class="panel">
+      <h3>Hand Local Frame (XY palm view)</h3>
+      <canvas id="frame-canvas" class="panel-canvas" width="320" height="300"></canvas>
+    </div>
+    <div class="panel">
+      <h3>Index Finger Joint Angles (local frame)</h3>
+      <div class="row"><span>MCP flexion</span><span class="val" id="mcp-angle">--</span></div>
+      <div class="row"><span>PIP flexion</span><span class="val" id="pip-angle">--</span></div>
+      <div class="row"><span>DIP flexion</span><span class="val" id="dip-angle">--</span></div>
+    </div>
+    <div class="panel">
+      <h3>Index Fingertip Position (local frame)</h3>
+      <div class="row"><span>X (spread: index→pinky)</span><span class="val" id="tip-x">--</span></div>
+      <div class="row"><span>Y (forward: wrist→fingers)</span><span class="val" id="tip-y">--</span></div>
+      <div class="row"><span>Z (depth: palm normal)</span><span class="val" id="tip-z">--</span></div>
+    </div>
+    <div class="panel">
+      <h3>β Mapping (angle-based: MCP→β₁, PIP→β₂)</h3>
+      <div class="row"><span>β₁</span><span class="val" id="beta1">--</span></div>
+      <div class="row"><span>β₂</span><span class="val" id="beta2">--</span></div>
+    </div>
+    <div class="panel">
+      <h3>β Space (crosshair = current β)</h3>
+      <canvas id="beta-canvas" class="panel-canvas" width="260" height="260"></canvas>
+    </div>
+  </div>
+</div>
+<script type="module" src="hand-track.js"></script>
+</body>
+</html>
