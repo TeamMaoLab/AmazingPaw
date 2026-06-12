@@ -42,15 +42,20 @@ jupyter notebook notebook/finger_build.ipynb
 - Newton-Raphson solver for (θ, φ) given (β₁, β₂)
   - Passive variables: θ (AB-axis rotation), φ (QP angle from +Z at P)
   - Numerical Jacobian (ε = 0.001°), convergence tol = 1e-4, max 50 iterations
-  - Physical validity filters: QP-AK segment intersection, K above base, theta continuity (<45°)
+  - Physical validity filters (4 constraints):
+    - C1: K above base plane (Kz ≥ z0)
+    - C2: QP and AK segments must intersect (four-bar not flipped)
+    - C3: KA-QP acute angle ≥ 10° (near-singularity guard)
+    - C4: θ continuity < 45° from initial guess
   - U branch selection via cross-product sign (prevents jump at φ≈50°)
-- Three mode system: Design / Kinematic / Grid
+- Dual mode system: Design / Kinematic Grid
   - **Design**: growth tree + annotations, parameter editing
-  - **Kinematic**: beta sliders + real-time solve, animation sweep
-  - **Grid**: BFS-based β₁×β₂ heatmap, seeded from design config
+  - **Kinematic Grid**: BFS-based β₁×β₂ heatmap, seeded from design config
+    - Configurable resolution: range (from/to) and step size (0.5°–10°)
+    - Grid origin (0°, 0°) at bottom-left, diagonal for symmetric operation
 - Rod length stability: design betas saved/restored on mode switch
-- Grid coordinate: (0°, 0°) at bottom-left, diagonal for symmetric operation
-- FastAPI server with /api/params persistence, Save Params button
+- FastAPI server with /api/params persistence (JSON file), Save Params button
+- Math drawer camera sync: RAF loop during CSS transition eliminates viewport stretch
 - Launch: `uv run web3/server.py` → http://localhost:8002/static/index.html
 
 ### Phase 5 — Mechanical design integration (next)
@@ -74,8 +79,7 @@ Single-page app, no build tools. Modular ES modules:
 | `annotations.js` | CAD-style dim/angle/radius annotations, KaTeX rendering |
 | `scene-builder.js` | Three.js scene lifecycle, rebuild logic, updatePositions |
 | `solver.js` | Newton-Raphson solver, forwardPositions, grid computation |
-| `mode-manager.js` | Design/Kinematic/Grid mode switching, rod length inheritance |
-| `kinematic-ui.js` | Beta sliders, animation sweep controls |
+| `mode-manager.js` | Design/Grid mode switching, rod length inheritance, grid orchestration |
 | `grid-mode.js` | β₁×β₂ heatmap rendering, pointer interaction |
 | `math-drawer.js` | Right-half KaTeX panel with SVG topology diagram |
 | `style.css` | Layout + drawer transition + annotation styles |
