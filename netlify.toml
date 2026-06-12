@@ -1,6 +1,0 @@
-[build]
-  publish = "app/static"
-  command = ""
-
-[build.environment]
-  NETLIFY_NEXT_PLUGIN_SKIP = "true"
