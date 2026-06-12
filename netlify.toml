@@ -1,0 +1,7 @@
+[build]
+  publish = "app/static"
+  command = ""
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+  enabled = false
