@@ -5,6 +5,7 @@ import { S, rebuildScene } from './state.js';
 import { solve, forwardPositions, computeGrid } from './solver.js';
 import { updatePositions, computeDesignPositions as getDesignPos } from './scene-builder.js';
 import { showGridPanel, hideGridPanel, drawGrid } from './grid-mode.js';
+import { buildWorkspaceSurface, removeWorkspaceSurface, updateWorkspaceMarker } from './workspace.js';
 
 function dist(a, b) {
   const dx = a[0] - b[0], dy = a[1] - b[1], dz = a[2] - b[2];
@@ -41,6 +42,7 @@ export function switchMode(newMode) {
   if (S.mode === 'grid') {
     hideGridPanel();
     stopAnimation();
+    removeWorkspaceSurface();
   }
 
   // ── Enter new mode ──
@@ -93,6 +95,7 @@ function getGridParams() {
 function startGridComputation() {
   S.gridComputing = true;
   S.gridData = null;
+  removeWorkspaceSurface();
   const p = S.params;
   const { from, to, step } = getGridParams();
   const res = Math.round((to - from) / step) + 1;
@@ -111,6 +114,7 @@ function startGridComputation() {
     } else {
       rebuildScene();
     }
+    buildWorkspaceSurface();
   });
 }
 

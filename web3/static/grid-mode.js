@@ -4,6 +4,7 @@
 import { S } from './state.js';
 import { gridLookup } from './solver.js';
 import { updatePositions } from './scene-builder.js';
+import { updateWorkspaceMarker } from './workspace.js';
 
 // Heatmap drawing area: margin for axis labels
 const MARGIN = { top: 20, right: 10, bottom: 34, left: 42 };
@@ -145,6 +146,7 @@ function handleGridPointer(e) {
     S.solverResult = { theta: result.theta, phi: result.phi };
     S.kinematicPositions = result.positions;
     updatePositions(S.kinematicPositions);
+    updateWorkspaceMarker();
     drawGrid(S.gridData, beta1, beta2);
 
     const status = document.getElementById('grid-footer');
