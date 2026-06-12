@@ -10,7 +10,8 @@ Parametric 3D skeleton sketch + kinematic solver for a servo-driven mechanical f
 
 - **Design Mode** — Growth-based parametric editor with 15 parameters, CAD-style annotations, inline editing
 - **Grid Mode** — β₁×β₂ workspace heatmap with BFS computation and physical validity filtering
-- **IK Mode** — Drag a target sphere in 3D, real-time inverse kinematics drives the mechanism
+- **IK Mode** — Drag a target sphere in 3D, grid-search inverse kinematics drives the mechanism
+- **Track Mode** — MediaPipe hand tracking via webcam, fingertip displacement → β grid lookup → real-time mechanism drive
 - **Workspace Surface** — 3D visualization of U (fingertip) reachable manifold
 - **Math Drawer** — KaTeX-rendered 8-body rigid body model with SVG topology diagram
 
@@ -24,20 +25,21 @@ uv run app/server.py
 
 ## Architecture
 
-Single-page app, no build tools. FastAPI backend for parameter persistence.
+Single-page app, no build tools. FastAPI dev server serves static files only. Parameters persist via `localStorage`.
 
 | Module | Responsibility |
 |--------|---------------|
-| `app/server.py` | FastAPI: static files + `/api/params` GET/POST |
+| `app/server.py` | FastAPI dev server: static files only |
 | `app/static/main.js` | Entry point, async init |
 | `app/static/defs.js` | Growth definitions, 15 parameters |
 | `app/static/scene-builder.js` | Three.js scene lifecycle |
 | `app/static/solver.js` | Newton-Raphson solver, grid computation |
 | `app/static/ik-solver.js` | Damped Least Squares inverse kinematics |
-| `app/static/mode-manager.js` | Design / Grid / IK mode switching |
+| `app/static/mode-manager.js` | Design / Grid / IK / Track mode switching |
 | `app/static/grid-mode.js` | β₁×β₂ heatmap rendering |
-| `app/static/workspace.js` | U workspace surface visualization |
-| `app/static/ik-mode.js` | IK drag interaction |
+| `app/static/workspace.js` | U workspace surface visualization + nearest-neighbor lookup |
+| `app/static/ik-mode.js` | IK drag interaction (grid search) |
+| `app/static/hand-track-mode.js` | MediaPipe hand tracking → β grid lookup → mechanism drive |
 | `app/static/math-drawer.js` | KaTeX math panel + SVG topology |
 | `app/static/ui.js` | Selection, hover, growth tree |
 | `app/static/annotations.js` | CAD annotations |

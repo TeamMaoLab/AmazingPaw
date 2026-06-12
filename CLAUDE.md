@@ -39,23 +39,27 @@ Single-page app. Modular ES modules in `app/static/`, vendored Three.js r170 in 
 | `app/static/workspace.js` | U workspace surface: point cloud + wireframe + marker sphere |
 | `app/static/ik-solver.js` | Damped Least Squares inverse kinematics |
 | `app/static/ik-mode.js` | IK drag interaction, RAF-throttled solving |
+| `app/static/hand-track-mode.js` | Track mode: MediaPipe hand tracking → fingertip displacement → β grid lookup → mechanism drive |
 | `app/static/math-drawer.js` | Right-half KaTeX panel with SVG topology diagram |
+| `app/static/experiments/hand-track.js` | Standalone hand tracking experiment page (not part of main app) |
 | `app/server.py` | FastAPI dev server: static files only |
 
 ### Data flow
 
 ```
-User edits param / drags IK target / clicks grid
+User edits param / drags IK target / clicks grid / hand gesture
   │
   ▼
 mode-manager.js — switches mode, inherits rod lengths
   │
   ├─ Design mode: defs.js → state.js.params → scene-builder.rebuildScene()
   ├─ Grid mode:   solver.computeGrid() → grid-mode.drawGrid() → workspace.buildWorkspaceSurface()
-  └─ IK mode:     ik-mode._runIK() → ik-solver.solveIK() → scene-builder.updatePositions()
-                                                                         │
-                                                                         ▼
-                                                               Three.js render loop
+  ├─ IK mode:     ik-mode._runLookup() → workspace.findNearestU() → scene-builder.updatePositions()
+  └─ Track mode:  hand-track-mode → MediaPipe HandLandmarker → fingertip displacement
+                    → β grid lookup → scene-builder.updatePositions()
+                                                                        │
+                                                                        ▼
+                                                              Three.js render loop
 ```
 
 ### Key API contracts
@@ -74,7 +78,7 @@ mode-manager.js — switches mode, inherits rod lengths
 
 **State object `S`** (in `state.js`):
 - `S.params` — flat param object (15 keys)
-- `S.mode` — `'design'` | `'grid'` | `'ik'`
+- `S.mode` — `'design'` | `'grid'` | `'ik'` | `'track'`
 - `S.meshes` — `{ stepName: { point, line?, plane?, circle? } }`
 - `S.kinematicPositions` — output of `forwardPositions()` when in Grid/IK mode
 - `S.solverResult` — `{ theta, phi }` from last solve
@@ -154,15 +158,16 @@ O (Origin)
   - λ = 0.01, ε = 0.1°, tol = 0.5mm, max 40 iterations
   - Fallback: brute-force ±3° search when Newton fails
 
-## Three interaction modes
+## Four interaction modes
 
 | Mode | Behavior | Entry action |
 |------|----------|-------------|
 | **Design** | Parametric editor, growth tree, annotations, inline editing | Default mode |
 | **Grid** | β₁×β₂ workspace heatmap (BFS-computed), workspace surface, heatmap drag | Saves design betas, inherits rod lengths from design config, runs grid computation |
-| **IK** | Drag pink target sphere in 3D, real-time IK solves servo angles | Same rod length inheritance, auto-computes coarse grid (5° step) if no grid data, shows workspace surface |
+| **IK** | Drag pink target sphere in 3D, grid-search IK solves servo angles | Same rod length inheritance, auto-computes coarse grid (2° step) if no grid data, shows workspace surface |
+| **Track** | MediaPipe hand tracking → fingertip displacement → β grid lookup → mechanism drive | Same rod length inheritance, opens webcam, floating widget with video + info panel + camera stop/resume |
 
-Mode switching restores design betas when returning to Design mode. Grid and IK modes disable tree editing and annotations.
+Mode switching restores design betas when returning to Design mode. Grid, IK, and Track modes disable tree editing and annotations. Track mode requires Grid mode to have been run first (needs `S.gridData`). Save Params button only visible in Design mode.
 
 ### Physical validity filters (solver)
 
@@ -183,6 +188,9 @@ Newton-Raphson converges to mathematically valid solutions that may be physicall
 - **Rod length inheritance**: entering Grid/IK mode computes rod lengths (L_RD, L_LF) from current design config and freezes them. This prevents param changes from breaking solver convergence.
 - **Workspace surface**: U positions colored by β₂ (jet colormap), stride-based wireframe grid lines (~5° spacing), white marker sphere at current U.
 - **IK RAF throttling**: pointermove only updates ball position, one IK solve per animation frame. Warm start reuses previous (β₁, β₂, θ, φ). Ball snaps to actual U after solve to stay on workspace surface.
+- **Track mode hand frame**: MediaPipe world landmarks → wrist-origin local frame (Y=forward, X=spread, Z=palm normal). Fingertip displacement from calibration baseline mapped to β₁/β₂ target, then nearest grid cell lookup.
+- **Track mode calibration**: Fist-in-zone (bottom-right corner) → 5s hold → 5s open-hand sampling → baseline. One Euro Filter (Casiez CHI 2012) for jitter reduction.
+- **Track mode widget**: Floating card (video + info panel + Stop/Resume button) in viewport bottom-left. Stop closes camera, Resume reopens. Switching modes auto-exits and cleans up.
 
 ## Development workflow
 
@@ -237,8 +245,16 @@ Geometry is built incrementally — each growth step adds one named element and 
 - Math drawer camera sync: RAF loop during CSS transition
 
 ### Phase 5 — Inverse kinematics + interactive control
-- Damped Least Squares IK solver
-- IK mode: drag target sphere, RAF-throttled real-time solving
-- Warm start + snap-to-U for smooth drag
-- Auto-compute workspace surface on IK entry
-- **Next**: camera hand tracking (MediaPipe Hands → finger pose → IK → mechanism drive)
+- Grid-search IK: pre-compute β₁×β₂ → (θ, φ, U) lookup table, nearest-neighbor on workspace surface
+- IK mode: drag target sphere, RAF-throttled grid lookup
+- Auto-compute coarse workspace surface on IK entry
+- Workspace surface independence: IK uses its own grid, Grid mode uses user-configured grid
+
+### Phase 6 — Hand tracking + real-time mechanism drive
+- MediaPipe HandLandmarker (WASM + WebGL, browser-side inference)
+- Hand local coordinate frame: wrist origin, Y=forward, X=spread, Z=palm normal
+- Index fingertip displacement → β₁/β₂ mapping → nearest grid cell lookup
+- One Euro Filter (Casiez CHI 2012) for jitter reduction
+- Fist-in-zone calibration: baseline sampling for displacement normalization
+- Track mode: floating widget (video + info + camera stop/resume), auto-cleanup on mode switch
+- Standalone experiment page: `app/static/experiments/hand-track.html`
