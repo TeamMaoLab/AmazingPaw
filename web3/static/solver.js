@@ -227,7 +227,21 @@ function isPhysicallyValid(p, positions, initTheta, initPhi) {
   const pre = positions._preRot;
   if (pre && !segmentsIntersect(pre.Q, pre.P, pre.A, pre.K)) return false;
 
-  // 3. theta continuity — reject if too far from initial guess
+  // 3. Acute angle between KA and QP lines >= 10° — near-singularity guard
+  if (pre) {
+    const kax = pre.K[0] - pre.A[0], kaz = pre.K[1] - pre.A[1];
+    const qpx = pre.Q[0] - pre.P[0], qpz = pre.Q[1] - pre.P[1];
+    const dot = kax * qpx + kaz * qpz;
+    const mka = Math.sqrt(kax * kax + kaz * kaz);
+    const mqp = Math.sqrt(qpx * qpx + qpz * qpz);
+    if (mka > 0.001 && mqp > 0.001) {
+      const cosA = Math.abs(dot) / (mka * mqp);
+      const acute = Math.acos(Math.min(1, cosA)) / DEG;
+      if (acute < 10) return false;
+    }
+  }
+
+  // 4. theta continuity — reject if too far from initial guess
   const theta = positions._theta_deg;
   if (initTheta !== undefined && Math.abs(theta - initTheta) > 45) return false;
 

@@ -620,7 +620,19 @@ $$K_z \geq z_0$$
 
 若 K 落到基座平面以下，说明连杆板翻转到不合理位置。
 
-#### 约束 C3：theta 连续性
+#### 约束 C3：KA 与 QP 锐角 ≥ 10°
+
+连杆板方向 KA 和臂延伸方向 QP 之间的锐角不能太小，防止接近奇异位形（两线段接近平行）。
+
+$$\text{acute}(\overrightarrow{KA},\ \overrightarrow{QP}) \geq 10°$$
+
+其中锐角由方向向量点积计算：
+
+$$\cos\alpha = \frac{|\overrightarrow{KA} \cdot \overrightarrow{QP}|}{|\overrightarrow{KA}| \cdot |\overrightarrow{QP}|}$$
+
+在设计配置（$\varphi = 0$）下，锐角约为 15°（有效）。当 $\varphi < -10°$ 或 $\varphi > 50°$ 时锐角降至阈值以下（被拒绝）。
+
+#### 约束 C4：theta 连续性
 
 $$|\theta_{solved} - \theta_{guess}| < 45°$$
 
