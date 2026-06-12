@@ -1,7 +1,7 @@
 /**
  * Stateless THREE.js geometry factories.
  */
-import * as THREE from '/static/lib/three.module.js';
+import * as THREE from './lib/three.module.js';
 
 export function makeCylinder(from, to, radius, color) {
   const geo = new THREE.CylinderGeometry(radius, radius, 1, 8);

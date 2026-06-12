@@ -2,7 +2,7 @@
  * Shared mutable state + constants.
  * All modules import S and read/write properties on this stable object reference.
  */
-import * as THREE from '/static/lib/three.module.js';
+import * as THREE from './lib/three.module.js';
 
 export const S = {
   // Growth parameters (flattened from GROWTH defs)

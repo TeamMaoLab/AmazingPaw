@@ -2,7 +2,7 @@
  * Annotation system — CAD-style dimension/angle/radius annotations.
  * Creates 3D line geometry and HTML overlay labels.
  */
-import * as THREE from '/static/lib/three.module.js';
+import * as THREE from './lib/three.module.js';
 import { S, rebuildScene } from './state.js';
 import { setHover, clearHover } from './ui.js';
 

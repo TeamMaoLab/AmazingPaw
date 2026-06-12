@@ -2,7 +2,7 @@
  * Workspace surface — visualizes U (link_joint) reachable manifold.
  * Point cloud colored by β₂ (jet colormap) + stride-based wireframe grid lines.
  */
-import * as THREE from '/static/lib/three.module.js';
+import * as THREE from './lib/three.module.js';
 import { S } from './state.js';
 import { forwardPositions } from './solver.js';
 

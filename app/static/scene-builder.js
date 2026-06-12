@@ -1,8 +1,8 @@
 /**
  * Three.js scene lifecycle — init, rebuild, animate.
  */
-import * as THREE from '/static/lib/three.module.js';
-import { OrbitControls } from '/static/lib/OrbitControls.js';
+import * as THREE from './lib/three.module.js';
+import { OrbitControls } from './lib/OrbitControls.js';
 import { S, setRebuildCallback } from './state.js';
 import { GROWTH, RODS, BODY_COLORS, STEP_BODY } from './defs.js';
 import { makeCylinder, makeDashedLine, makeDashedCircle, makePlane, placeCylinder } from './geometry.js';
