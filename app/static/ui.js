@@ -1,7 +1,7 @@
 /**
  * Selection, hover highlighting, growth tree overlay, view controls, viewport click.
  */
-import * as THREE from '/static/lib/three.module.js';
+import * as THREE from './lib/three.module.js';
 import { S } from './state.js';
 import { GROWTH, RODS, BODY_COLORS, STEP_BODY } from './defs.js';
 

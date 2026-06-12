@@ -6,7 +6,7 @@
  * Drag uses RAF throttling: pointermove only updates the ball position,
  * one IK solve per animation frame.
  */
-import * as THREE from '/static/lib/three.module.js';
+import * as THREE from './lib/three.module.js';
 import { S } from './state.js';
 import { solveIK } from './ik-solver.js';
 import { updatePositions } from './scene-builder.js';
