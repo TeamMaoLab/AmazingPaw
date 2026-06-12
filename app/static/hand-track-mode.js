@@ -671,7 +671,6 @@ export async function toggleTrackPause() {
     _stopCamera();
     btn.textContent = 'Resume';
     btn.classList.add('stopped');
-    btn.disabled = true;
     _setText('track-status', 'Camera off');
     _setText('track-fps', '--');
   } else {
@@ -681,8 +680,10 @@ export async function toggleTrackPause() {
     try {
       await _startCamera();
       _stopped = false;
+      _lastVideoTime = -1;
       btn.textContent = 'Stop';
       btn.classList.remove('stopped');
+      btn.disabled = false;
       _setText('track-status', 'Tracking');
       _fpsFrames = 0;
       _fpsStart = performance.now();
@@ -690,8 +691,8 @@ export async function toggleTrackPause() {
       _setText('track-status', `Camera error: ${e.message}`);
       btn.textContent = 'Resume';
       btn.classList.add('stopped');
+      btn.disabled = false;
     }
-    btn.disabled = false;
   }
 }
 
