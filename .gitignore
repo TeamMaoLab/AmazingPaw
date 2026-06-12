@@ -1,4 +1,4 @@
-# Python-generated files
+# Python
 __pycache__/
 *.py[oc]
 build/
@@ -11,3 +11,14 @@ wheels/
 
 # Jupyter
 .ipynb_checkpoints/
+
+# Runtime artifacts
+saved_params.json
+
+# Archive (old versions)
+_archive/
+
+# IDE
+.idea/
+.vscode/
+*.swp

@@ -56,7 +56,7 @@ export function buildWorkspaceSurface() {
   ptGeo.setAttribute('position', new THREE.Float32BufferAttribute(ptArr, 3));
   ptGeo.setAttribute('color', new THREE.Float32BufferAttribute(colArr, 3));
   _pointCloud = new THREE.Points(ptGeo, new THREE.PointsMaterial({
-    size: 0.8, vertexColors: true, sizeAttenuation: true, depthWrite: false,
+    size: 1.0, vertexColors: true, sizeAttenuation: true, depthWrite: false,
   }));
   S.scene.add(_pointCloud);
 
@@ -82,7 +82,7 @@ export function buildWorkspaceSurface() {
   const wGeo = new THREE.BufferGeometry();
   wGeo.setAttribute('position', new THREE.Float32BufferAttribute(lineArr, 3));
   _wireframe = new THREE.LineSegments(wGeo, new THREE.LineBasicMaterial({
-    color: 0x4488ff, opacity: 0.18, transparent: true,
+    color: 0x4488ff, opacity: 0.35, transparent: true,
   }));
   S.scene.add(_wireframe);
 

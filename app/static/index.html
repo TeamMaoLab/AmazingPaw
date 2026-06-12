@@ -13,7 +13,8 @@
   <h1>Parametric Skeleton</h1>
   <div class="mode-tabs">
     <button class="mode-tab active" data-mode="design">Design</button>
-    <button class="mode-tab" data-mode="grid">Kinematic Grid</button>
+    <button class="mode-tab" data-mode="grid">Grid</button>
+    <button class="mode-tab" data-mode="ik">IK</button>
     <button id="save-params-btn" class="mode-tab" style="margin-left:12px;background:#2ecc71;color:#fff;border-color:#27ae60;">Save Params</button>
   </div>
   <span class="status" id="status">Ready</span>
@@ -46,6 +47,20 @@
       </div>
       <canvas id="grid-canvas" width="320" height="320"></canvas>
       <div class="grid-footer" id="grid-footer">Click to explore</div>
+    </div>
+
+    <!-- IK mode panel -->
+    <div class="ik-panel hidden" id="ik-panel">
+      <div class="ik-header">
+        <span class="ik-title">Inverse Kinematics</span>
+        <span class="ik-status" id="ik-status">Drag the pink sphere</span>
+      </div>
+      <div class="ik-body">
+        <div class="ik-row"><span class="ik-label">Target</span><span class="ik-value" id="ik-target">—</span></div>
+        <div class="ik-row"><span class="ik-label">β₁</span><span class="ik-value" id="ik-beta1">—</span></div>
+        <div class="ik-row"><span class="ik-label">β₂</span><span class="ik-value" id="ik-beta2">—</span></div>
+        <div class="ik-row"><span class="ik-label">Error</span><span class="ik-value" id="ik-error">—</span></div>
+      </div>
     </div>
   </div>
   <div class="math-drawer" id="math-drawer">

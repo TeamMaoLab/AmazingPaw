@@ -11,7 +11,7 @@ export const GROWTH = [
   },
   {
     name: 'servo', parent: 'Origin', label: 'S', noLine: true,
-    params: { x_e: { default: 11, min: 0, max: 60, step: 0.5, unit: 'mm' } },
+    params: { x_e: { default: 16, min: 0, max: 60, step: 0.5, unit: 'mm' } },
     annotations: [{ type: 'dim', param: 'x_e', from: 'Origin', to: 'servo' }],
     build: (p) => ({
       pos: [p.x_e, 0, 0],
@@ -29,8 +29,8 @@ export const GROWTH = [
     name: 'servo_r', parent: 'servo_z', label: 'C',
     dashed: true,
     params: {
-      y_e: { default: 16, min: 0, max: 30, step: 0.5, unit: 'mm' },
-      R: { default: 16, min: 0, max: 40, step: 0.5, unit: 'mm' },
+      y_e: { default: 7, min: 0, max: 30, step: 0.5, unit: 'mm' },
+      R: { default: 7, min: 0, max: 40, step: 0.5, unit: 'mm' },
     },
     annotations: [
       { type: 'dim', param: 'y_e', from: 'servo_z', to: 'servo_r' },
@@ -48,7 +48,7 @@ export const GROWTH = [
   },
   {
     name: 'servo_arm_r', parent: 'servo_r', label: 'D',
-    params: { beta1: { default: 70, min: 0, max: 360, step: 1, unit: '°' } },
+    params: { beta1: { default: 0, min: 0, max: 360, step: 1, unit: '°' } },
     annotations: [{ type: 'angle', param: 'beta1', vertex: 'servo_r', refDir: [0, 0, 1], to: 'servo_arm_r' }],
     build: (p, parentPos) => {
       const rad = p.beta1 * Math.PI / 180;
@@ -57,7 +57,7 @@ export const GROWTH = [
   },
   {
     name: 'servo_arm_l', parent: 'servo_l', label: 'F',
-    params: { beta2: { default: 70, min: 0, max: 360, step: 1, unit: '°' } },
+    params: { beta2: { default: 0, min: 0, max: 360, step: 1, unit: '°' } },
     build: (p, parentPos) => {
       const rad = -p.beta2 * Math.PI / 180;
       return { pos: [parentPos[0], parentPos[1] + p.R * Math.sin(rad), parentPos[2] + p.R * Math.cos(rad)] };
@@ -200,20 +200,17 @@ export function applyOverrides(p, overrides) {
   return p;
 }
 
+const STORAGE_KEY = 'hands-params';
+
 export async function loadSavedParams() {
   try {
-    const res = await fetch('/api/params');
-    if (!res.ok) return null;
-    return await res.json();
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
   } catch (_) { return null; }
 }
 
 export async function saveParams(params) {
   try {
-    await fetch('/api/params', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(params),
-    });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(params));
   } catch (_) { /* silently fail */ }
 }

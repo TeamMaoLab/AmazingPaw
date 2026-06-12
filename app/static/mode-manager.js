@@ -1,11 +1,12 @@
 /**
- * Mode manager — coordinates Design / Grid mode switching.
+ * Mode manager — coordinates Design / Grid / IK mode switching.
  */
 import { S, rebuildScene } from './state.js';
 import { solve, forwardPositions, computeGrid } from './solver.js';
 import { updatePositions, computeDesignPositions as getDesignPos } from './scene-builder.js';
 import { showGridPanel, hideGridPanel, drawGrid } from './grid-mode.js';
-import { buildWorkspaceSurface, removeWorkspaceSurface, updateWorkspaceMarker } from './workspace.js';
+import { buildWorkspaceSurface, removeWorkspaceSurface } from './workspace.js';
+import { enterIKMode, exitIKMode } from './ik-mode.js';
 
 function dist(a, b) {
   const dx = a[0] - b[0], dy = a[1] - b[1], dz = a[2] - b[2];
@@ -37,16 +38,21 @@ function doInitialSolve() {
 
 export function switchMode(newMode) {
   if (S.mode === newMode) return;
+  const prevMode = S.mode;
 
   // ── Cleanup current mode ──
-  if (S.mode === 'grid') {
+  if (prevMode === 'grid') {
     hideGridPanel();
     stopAnimation();
     removeWorkspaceSurface();
   }
+  if (prevMode === 'ik') {
+    exitIKMode();
+  }
 
   // ── Enter new mode ──
   if (newMode === 'design') {
+    removeWorkspaceSurface();
     S.mode = 'design';
     S.kinematicPositions = null;
     S.solverResult = null;
@@ -64,7 +70,7 @@ export function switchMode(newMode) {
   }
 
   if (newMode === 'grid') {
-    if (S.mode === 'design') {
+    if (prevMode === 'design') {
       S.designBetas = { beta1: S.params.beta1, beta2: S.params.beta2 };
     }
     inheritRodLengths();
@@ -75,6 +81,32 @@ export function switchMode(newMode) {
     showGridPanel();
     startGridComputation();
     updateModeTabs('grid');
+  }
+
+  if (newMode === 'ik') {
+    if (prevMode === 'design') {
+      S.designBetas = { beta1: S.params.beta1, beta2: S.params.beta2 };
+      inheritRodLengths();
+    }
+    S.mode = 'ik';
+    disableTreeEditing();
+    disableAnnotations();
+    hideTree();
+    if (!S.kinematicPositions && !doInitialSolve()) {
+      showStatusError('IK: no solution at current β');
+      S.mode = prevMode;
+      return;
+    }
+    rebuildScene();
+    if (S.gridData) {
+      buildWorkspaceSurface();
+      enterIKMode();
+    } else {
+      // Auto-compute coarse grid (5° step) for workspace surface
+      startIKGridComputation();
+      enterIKMode();
+    }
+    updateModeTabs('ik');
   }
 }
 
@@ -90,6 +122,17 @@ function getGridParams() {
   const to = parseFloat(document.getElementById('grid-to').value) || 180;
   const step = parseFloat(document.getElementById('grid-step').value) || 1;
   return { from, to: Math.max(from + step, to), step: Math.max(0.5, step) };
+}
+
+function startIKGridComputation() {
+  const p = S.params;
+  const from = 0, to = 180, step = 5;
+  const res = Math.round((to - from) / step) + 1;
+
+  computeGrid(p, S.solverRodLengths.L_RD2, S.solverRodLengths.L_LF2, from, to, step).then(data => {
+    S.gridData = data;
+    buildWorkspaceSurface();
+  });
 }
 
 function startGridComputation() {

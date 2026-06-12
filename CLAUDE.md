@@ -9,22 +9,18 @@ Robotic hand kinematics modeling and visualization tool. A servo-driven mechanic
 ## Build / run
 
 ```bash
-# Active tool — web3 parametric skeleton + math model
-uv run web3/server.py
-# → http://localhost:8002/index.html
-
-# Python environment
 uv sync
-jupyter notebook notebook/finger_build.ipynb
+uv run app/server.py
+# → http://localhost:8002/static/index.html
 ```
 
 ## Progress summary
 
-### Phase 1 — Web visualization + Newton-Raphson solver (read-only)
-- `web/` — interactive 2-DOF solver, parameter space grid
+### Phase 1 — Web visualization + Newton-Raphson solver (archived)
+- `_archive/web/` — interactive 2-DOF solver, parameter space grid
 - `docs/mechanism_math_model.md` — 6-body mathematical model (reference)
 
-### Phase 2 — Parametric 3D skeleton sketch (web3, completed)
+### Phase 2 — Parametric 3D skeleton sketch (completed)
 - Growth-based point-line-plane editor with 15 parameters
 - CAD-style annotations (dimension + angle + radius), editable inline
 - Cross-linked hover highlighting (tree ↔ 3D ↔ annotations)
@@ -67,7 +63,7 @@ jupyter notebook notebook/finger_build.ipynb
 - IK mode UI: drag target point in 3D, solve for servo angles
 - Camera hand tracking: MediaPipe Hands → finger pose → IK → real-time mechanism drive
 
-## Active tool: web3
+## Active tool: app
 
 ### Architecture
 
@@ -75,22 +71,24 @@ Single-page app, no build tools. Modular ES modules:
 
 | Module | Responsibility |
 |--------|---------------|
-| `main.js` | Async init: load saved params, bind save button |
-| `state.js` | Shared mutable state object S, rebuild callback |
-| `defs.js` | Growth definitions, parameters, load/save params API |
-| `geometry.js` | Stateless THREE.js geometry factories |
-| `ui.js` | Selection, hover highlighting, growth tree, view controls |
-| `annotations.js` | CAD-style dim/angle/radius annotations, KaTeX rendering |
-| `scene-builder.js` | Three.js scene lifecycle, rebuild logic, updatePositions |
-| `solver.js` | Newton-Raphson solver, forwardPositions, grid computation |
-| `mode-manager.js` | Design/Grid mode switching, rod length inheritance, grid orchestration |
-| `grid-mode.js` | β₁×β₂ heatmap rendering, pointer interaction |
-| `workspace.js` | U workspace surface visualization (point cloud + wireframe + marker) |
-| `math-drawer.js` | Right-half KaTeX panel with SVG topology diagram |
-| `style.css` | Layout + drawer transition + annotation styles |
-| `index.html` | Page structure, mode tabs, save button, KaTeX CDN |
-| `lib/` | Three.js r170 + OrbitControls (vendored) |
-| `server.py` | FastAPI: static files + /api/params GET/POST |
+| `app/server.py` | FastAPI: static files + /api/params GET/POST |
+| `app/static/main.js` | Async init: load saved params, bind save button |
+| `app/static/state.js` | Shared mutable state object S, rebuild callback |
+| `app/static/defs.js` | Growth definitions, parameters, load/save params API |
+| `app/static/geometry.js` | Stateless THREE.js geometry factories |
+| `app/static/ui.js` | Selection, hover highlighting, growth tree, view controls |
+| `app/static/annotations.js` | CAD-style dim/angle/radius annotations, KaTeX rendering |
+| `app/static/scene-builder.js` | Three.js scene lifecycle, rebuild logic, updatePositions |
+| `app/static/solver.js` | Newton-Raphson solver, forwardPositions, grid computation |
+| `app/static/mode-manager.js` | Design/Grid/IK mode switching, rod length inheritance |
+| `app/static/grid-mode.js` | β₁×β₂ heatmap rendering, pointer interaction |
+| `app/static/workspace.js` | U workspace surface visualization (point cloud + wireframe + marker) |
+| `app/static/ik-solver.js` | Damped Least Squares inverse kinematics |
+| `app/static/ik-mode.js` | IK drag interaction, RAF-throttled solving |
+| `app/static/math-drawer.js` | Right-half KaTeX panel with SVG topology diagram |
+| `app/static/style.css` | Layout + drawer transition + annotation styles |
+| `app/static/index.html` | Page structure, mode tabs, save button, KaTeX CDN |
+| `app/static/lib/` | Three.js r170 + OrbitControls (vendored) |
 
 ### Current skeleton (growth order)
 
@@ -166,11 +164,9 @@ O (Origin)
 
 ## Reference files
 
-- `docs/mechanism_math_model.md` — Phase 1 math model (6-body, reference)
-- `docs/rigid_body_math_model.md` — Phase 3 math model (8-body, current)
+- `docs/rigid_body_math_model.md` — 8-body math model (current)
+- `docs/mechanism_math_model.md` — 6-body math model (reference)
 - `docs/phase1_summary.md` — Phase 1 experience summary
-- `web/` — Phase 1 web visualization (read-only)
-- `web2/` — Phase 2 iteration 1 (superseded by web3)
 
 ## Design workflow
 
