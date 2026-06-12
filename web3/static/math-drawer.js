@@ -481,17 +481,26 @@ export async function initMathDrawer() {
   buildContent(content);
 
   let isOpen = false;
+  let resizeRaf = null;
   const toggle = () => {
     isOpen = !isOpen;
     drawer.classList.toggle('open', isOpen);
     viewport.classList.toggle('shrunk', isOpen);
     btn.classList.toggle('active', isOpen);
+
+    // Keep camera in sync during the 0.4s flex-basis transition
+    if (resizeRaf) cancelAnimationFrame(resizeRaf);
+    const syncResize = () => {
+      onResize();
+      resizeRaf = requestAnimationFrame(syncResize);
+    };
+    syncResize();
   };
 
   btn.addEventListener('click', toggle);
 
-  // Resize Three.js after transition ends
   drawer.addEventListener('transitionend', () => {
+    if (resizeRaf) { cancelAnimationFrame(resizeRaf); resizeRaf = null; }
     onResize();
   });
 }
