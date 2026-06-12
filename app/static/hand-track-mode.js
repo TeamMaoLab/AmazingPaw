@@ -138,10 +138,21 @@ const PALM_EDGES = [[0, 5], [5, 9], [9, 13], [13, 17], [0, 17]];
 
 // ─── MediaPipe init (lazy, cached) ───
 
+const MODEL_URL = 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task';
+
+function _setProgress(pct, label) {
+  const bar = document.getElementById('track-progress-bar');
+  const lbl = document.getElementById('track-progress-label');
+  if (bar) bar.style.width = pct + '%';
+  if (lbl) lbl.textContent = label;
+}
+
 async function _initMediaPipe() {
   if (_handLandmarker) return;
 
   let HandLandmarker, FilesetResolver;
+  _setProgress(5, 'Loading WASM...');
+
   try {
     const mod = await import(
       'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/vision_bundle.mjs'
@@ -156,14 +167,49 @@ async function _initMediaPipe() {
     FilesetResolver = mod.FilesetResolver;
   }
 
+  _setProgress(15, 'Initializing WASM...');
   const vision = await FilesetResolver.forVisionTasks(
     'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm'
   );
 
+  _setProgress(25, 'Downloading model...');
+  let modelBuffer;
+  try {
+    const resp = await fetch(MODEL_URL);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const total = parseInt(resp.headers.get('Content-Length') || '0', 10);
+    const reader = resp.body.getReader();
+    const chunks = [];
+    let loaded = 0;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      loaded += value.length;
+      if (total > 0) {
+        const pct = 25 + Math.round((loaded / total) * 55);
+        const mb = (loaded / 1048576).toFixed(1);
+        const totalMb = (total / 1048576).toFixed(1);
+        _setProgress(pct, `Downloading model... ${mb}/${totalMb} MB`);
+      }
+    }
+    modelBuffer = new Uint8Array(loaded);
+    let offset = 0;
+    for (const chunk of chunks) {
+      modelBuffer.set(chunk, offset);
+      offset += chunk.length;
+    }
+  } catch (e) {
+    _setProgress(25, 'Download failed, retrying...');
+    const resp = await fetch(MODEL_URL);
+    modelBuffer = new Uint8Array(await resp.arrayBuffer());
+  }
+
+  _setProgress(85, 'Initializing model...');
   try {
     _handLandmarker = await HandLandmarker.createFromOptions(vision, {
       baseOptions: {
-        modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task',
+        modelAssetBuffer: modelBuffer,
         delegate: 'GPU',
       },
       numHands: 2,
@@ -172,13 +218,15 @@ async function _initMediaPipe() {
   } catch {
     _handLandmarker = await HandLandmarker.createFromOptions(vision, {
       baseOptions: {
-        modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task',
+        modelAssetBuffer: modelBuffer,
         delegate: 'CPU',
       },
       numHands: 2,
       runningMode: 'VIDEO',
     });
   }
+
+  _setProgress(100, 'Ready');
 }
 
 // ─── DOM: create floating track widget (video + panel) ───
@@ -208,8 +256,29 @@ function _createVideoOverlay() {
   overlay.style.cssText = 'position:absolute;top:0;left:0;width:320px;height:240px;transform:scaleX(-1);pointer-events:none;';
   _overlayEl = overlay;
 
+  // Progress overlay (shown during loading, hidden once camera starts)
+  const progressWrap = document.createElement('div');
+  progressWrap.id = 'track-progress';
+  progressWrap.style.cssText = 'position:absolute;top:0;left:0;width:320px;height:240px;background:rgba(0,0,0,0.85);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#ccc;font-size:12px;font-family:"SF Mono",Menlo,monospace;';
+
+  const progressBar = document.createElement('div');
+  progressBar.style.cssText = 'width:220px;height:6px;background:rgba(255,255,255,0.15);border-radius:3px;margin-top:10px;overflow:hidden;';
+  const progressFill = document.createElement('div');
+  progressFill.id = 'track-progress-bar';
+  progressFill.style.cssText = 'width:0%;height:100%;background:#4fc3f7;border-radius:3px;transition:width 0.2s;';
+  progressBar.appendChild(progressFill);
+
+  const progressLabel = document.createElement('div');
+  progressLabel.id = 'track-progress-label';
+  progressLabel.textContent = 'Loading...';
+  progressLabel.style.cssText = 'margin-top:8px;font-size:11px;color:#888;';
+
+  progressWrap.appendChild(progressBar);
+  progressWrap.appendChild(progressLabel);
+
   videoWrap.appendChild(video);
   videoWrap.appendChild(overlay);
+  videoWrap.appendChild(progressWrap);
 
   // Info panel
   const panel = document.createElement('div');
@@ -611,8 +680,9 @@ function _processResult(result) {
 // ─── Public API ───
 
 export async function enterTrackMode() {
-  _showPanel();
-  _setText('track-status', 'Loading MediaPipe...');
+  // Create widget first so progress bar is visible during loading
+  _createVideoOverlay();
+  _setText('track-status', 'Loading...');
 
   try {
     await _initMediaPipe();
@@ -621,8 +691,7 @@ export async function enterTrackMode() {
     return;
   }
 
-  _createVideoOverlay();
-  _setText('track-status', 'Starting camera...');
+  _setProgress(100, 'Starting camera...');
 
   try {
     await _startCamera();
@@ -631,6 +700,10 @@ export async function enterTrackMode() {
     _removeVideoOverlay();
     return;
   }
+
+  // Hide progress overlay, show live video
+  const progressEl = document.getElementById('track-progress');
+  if (progressEl) progressEl.style.display = 'none';
 
   // Check grid data exists
   if (!S.gridData) {
