@@ -66,6 +66,11 @@
         <span class="grid-title">β₁ × β₂ Workspace</span>
         <span class="grid-status" id="grid-status">Ready</span>
       </div>
+      <div class="grid-controls">
+        <label>Range <input type="number" id="grid-from" value="0" min="0" max="180" step="1" style="width:36px">° – <input type="number" id="grid-to" value="180" min="0" max="180" step="1" style="width:36px">°</label>
+        <label>Step <input type="number" id="grid-step" value="1" min="0.5" max="10" step="0.5" style="width:42px">°</label>
+        <button id="grid-recompute">Compute</button>
+      </div>
       <canvas id="grid-canvas" width="320" height="320"></canvas>
       <div class="grid-footer" id="grid-footer">Click to explore</div>
     </div>

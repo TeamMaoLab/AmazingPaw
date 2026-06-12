@@ -113,17 +113,28 @@ export function stopAnimation() {
   }
 }
 
+function getGridParams() {
+  const from = parseFloat(document.getElementById('grid-from').value) || 0;
+  const to = parseFloat(document.getElementById('grid-to').value) || 180;
+  const step = parseFloat(document.getElementById('grid-step').value) || 1;
+  return { from, to: Math.max(from + step, to), step: Math.max(0.5, step) };
+}
+
 function startGridComputation() {
   S.gridComputing = true;
-  S.gridData = null; // Clear stale data
+  S.gridData = null;
   const p = S.params;
-  computeGrid(p, S.solverRodLengths.L_RD2, S.solverRodLengths.L_LF2, 0, 180, 70, (done, total) => {
+  const { from, to, step } = getGridParams();
+  const res = Math.round((to - from) / step) + 1;
+  updateGridStatus(`Computing ${res}×${res}...`);
+
+  computeGrid(p, S.solverRodLengths.L_RD2, S.solverRodLengths.L_LF2, from, to, step, (done, total) => {
     updateGridStatus(`Computing ${done}/${total}...`);
   }).then(data => {
     S.gridData = data;
     S.gridComputing = false;
     drawGrid(data, S.params.beta1, S.params.beta2);
-    updateGridStatus('Click to explore');
+    updateGridStatus(`${res}×${res} (${step}° step) — Click to explore`);
 
     if (!doInitialSolve()) {
       updateGridStatus('No solution at current β');
@@ -188,5 +199,9 @@ function updateGridStatus(msg) {
 export function bindModeTabs() {
   document.querySelectorAll('.mode-tab').forEach(btn => {
     btn.addEventListener('click', () => switchMode(btn.dataset.mode));
+  });
+  const recomputeBtn = document.getElementById('grid-recompute');
+  if (recomputeBtn) recomputeBtn.addEventListener('click', () => {
+    if (S.mode === 'grid') startGridComputation();
   });
 }

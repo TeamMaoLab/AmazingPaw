@@ -360,8 +360,9 @@ export function sweep(p, L_RD2, L_LF2, driveParam, from, to, step, onProgress) {
 // Strategy: seed from design beta point, then spiral outward for good initial guesses,
 // then fill remaining cells row-by-row using neighbor propagation.
 
-export function computeGrid(p, L_RD2, L_LF2, from, to, res, onProgress) {
+export function computeGrid(p, L_RD2, L_LF2, from, to, gridStep, onProgress) {
   return new Promise((resolve) => {
+    const res = Math.round((to - from) / gridStep) + 1;
     const step = (to - from) / (res - 1);
     const grid = new Float32Array(res * res * 3); // [theta, phi, status]
 
