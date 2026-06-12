@@ -32,7 +32,7 @@ export const S = {
   showAnnotations: true,
 
   // Mode system
-  mode: 'design',            // 'design' | 'kinematic' | 'grid'
+  mode: 'design',            // 'design' | 'grid' | 'ik' | 'track'
   solverResult: null,         // { theta, kappa } from Newton-Raphson
   kinematicPositions: null,   // positions computed by solver
   solverRodLengths: null,     // { L_RD2, L_LF2 } squared rod lengths
